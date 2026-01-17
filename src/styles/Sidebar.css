@@ -1,0 +1,211 @@
+.sidebar {
+  
+  border-right: 1px solid rgba(200, 160, 255, 0.3);
+  box-shadow: 4px 0 20px rgba(180, 120, 255, 0.2);
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: #222;
+
+}
+
+.sidebar .chat-list {
+  list-style: none;
+  /* Remove bullets */
+  padding: 0;
+  /* Remove default padding */
+  margin: 0;
+  /* Remove default margin */
+}
+
+.sidebar .chat-list li {
+  cursor: pointer;
+  /* Show pointer on hover */
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.sidebar .chat-list li:hover {
+  background-color: #333;
+  /* Or your highlight color */
+}
+
+.sidebar .chat-list li.active {
+  background-color: #555;
+  /* Active chat highlight */
+  font-weight: bold;
+}
+
+.sidebar .search-input {
+  width: 100%;
+  margin: 9px auto;
+  display: block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color:transparent;
+  color: white;
+  font-size: 14px;
+}
+
+.sidebar .search-input::placeholder {
+  color: #888;
+}
+
+.sidebar .chats-heading {
+  margin: 12px 10px 6px;
+  font-weight: 600;
+  font-size: 16px;
+  color: #bbb;
+}
+
+/* Custom scrollbar - ChatGPT style for sidebar chat list */
+
+.sidebar .chat-list {
+  max-height: 10 vh;
+  /* adjust as needed */
+  overflow-y: auto;
+  padding-right: 8px;
+  /* prevent content behind scrollbar */
+}
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+.sidebar .chat-list::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+
+.sidebar .chat-list::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+  /* top and bottom space */
+  border-radius: 10px;
+}
+
+.sidebar .chat-list::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 255, 0.3);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  box-shadow: 0 0 6px rgba(100, 100, 255, 0.6);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sidebar .chat-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 255, 0.6);
+  box-shadow: 0 0 8px 2px rgba(100, 100, 255, 0.8);
+}
+
+/* Firefox */
+.sidebar .chat-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(244, 244, 246, 0.3) transparent;
+}
+
+.sidebar .chat-list:hover {
+  scrollbar-color: rgba(234, 234, 241, 0.6) transparent;
+}
+
+.chat-header {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  color: rgb(164, 164, 164);
+  user-select: none;
+}
+
+.chat-list li.clickable {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.chat-list li.clickable:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.chat-list li.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+}
+
+.chat-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chat-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.chat-list li:hover {
+  background-color:transparent;
+}
+
+.chat-list li .chat-title {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  white-space: normal;
+  /* allow wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  /* limits text to 2 lines */
+  -webkit-box-orient: vertical;
+}
+
+.chat-list li .delete-btn {
+  flex-shrink: 0;
+  display: none;
+  /* hide by default */
+  margin-left: 8px;
+  background: transparent;
+  border: none;
+  color: #f44336;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  user-select: none;
+  transition: opacity 0.2s;
+}
+
+.chat-list li:hover .delete-btn {
+  display: inline-block;
+  /* show on hover */
+  opacity: 1;
+}
+
+.sidebar {
+  overflow-x: hidden;
+  max-width: 100%;
+}

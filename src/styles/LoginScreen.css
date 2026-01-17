@@ -1,0 +1,181 @@
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden !important;  
+}
+
+::-webkit-scrollbar {
+ overflow: hidden !important; 
+}
+
+.login-screen {
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgb(32, 32, 32);
+  background-size: 400% 400%;
+}
+
+.login-box {
+  width: 380px;
+  background: transparent;
+  overflow: hidden !important;
+  padding: 40px 35px;
+  text-align: center;
+}
+
+/* Logo */
+.logo {
+  width: 70px;
+  margin-bottom: 10px;
+}
+
+/* Text */
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: #fff;
+}
+.highlight {
+  color: #4ca1af;
+}
+.subtitle {
+  color: #aaa;
+  font-size: 14px;
+  margin-bottom: 25px;
+}
+
+/* Social Buttons */
+.social-btn {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  transition: all 0.3s ease;
+}
+.social-btn:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+}
+.social-btn .icon {
+  width: 18px;
+}
+
+/* Divider */
+.divider {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+}
+.divider::before, .divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #444;
+}
+.divider span {
+  margin: 0 10px;
+}
+
+/* Floating label input */
+.input-group {
+  position: relative;
+  margin: 10px 10px;
+  justify-content: center;
+  width: 91%;
+}
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  outline: none;
+}
+.input-group label {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: #aaa;
+  font-size: 14px;
+  transition: 0.3s ease;
+}
+.input-group input:focus + label,
+.input-group input:valid + label {
+  top: -5px;
+  left: 10px;
+  font-size: 12px;
+  color:transparent;
+}
+
+/* Login button */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 12px;
+  background:  rgba(255,255,255,0.12);
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.login-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Guest */
+.guest-btn {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  cursor: pointer;
+}
+.guest-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Links */
+.forgot-link {
+  display: block;
+  margin-top: 8px;
+  color: whitesmoke;
+  font-size: 13px;
+  text-decoration: none;
+}
+.signup-text {
+  margin-top: 15px;
+  font-size: 13px;
+  color: #ccc;
+}
+.signup-text a {
+  color: white;
+  text-decoration: none;
+}
+
+
+

@@ -1,0 +1,136 @@
+.splash-screen-full {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #090909, #1e1e1e);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: zoomFadeIn 2s ease-in-out forwards;
+  z-index: 9999;
+}
+
+/* Glowing animated title */
+.mindmate-title {
+  font-size: 4rem;
+  font-weight: 900;
+  color: transparent;
+  background: linear-gradient(90deg, #00f0ff, #7f5af0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 60px #7f5af0aa;
+  animation: pulseGlow 3s infinite ease-in-out, floatY 3.5s ease-in-out infinite;
+}
+
+/* Subtitle */
+.splash-tagline {
+  margin-top: 12px;
+  font-size: 1.2rem;
+  color: #e2e2e2;
+  opacity: 0;
+  animation: fadeIn 2s ease 1.5s forwards;
+}
+
+/* Floating particles texture */
+.particles-layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+  opacity: 0.06;
+  animation: scrollStars 30s linear infinite;
+  z-index: 0;
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    text-shadow: 0 0 20px #00f0ff66, 0 0 35px #7f5af0aa;
+  }
+  50% {
+    text-shadow: 0 0 30px #00f0ffcc, 0 0 60px #7f5af0;
+  }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes zoomFadeIn {
+  0% {
+    transform: scale(1.2);
+    opacity: 0;
+    filter: blur(20px);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes scrollStars {
+  0% { background-position: 0 0; }
+  100% { background-position: 100px 200px; }
+}
+
+
+.splash-screen {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #0f0f1b, #131a28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 1s ease-in;
+  overflow: hidden;
+}
+
+.splash-logo {
+  width: 130px;
+  height: 130px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  animation: logoFloat 3s ease-in-out infinite;
+  box-shadow: 0 0 25px rgba(0, 255, 200, 0.25); /* reduced glow */
+}
+
+.animated-text {
+  font-size: 40px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #1dd1a1, #5f27cd, #00d2d3);
+  background-clip: border-box;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glowText 2s ease-in-out infinite alternate;
+  font-family: 'Segoe UI', sans-serif;
+  letter-spacing: 1.5px;
+}
+
+@keyframes glowText {
+  from {
+    text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+  }
+  to {
+    text-shadow: 0 0 20px #00ffcc, 0 0 40px #00ffcc;
+  }
+}
+
+@keyframes logoFloat {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}

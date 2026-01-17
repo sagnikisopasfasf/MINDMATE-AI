@@ -1,0 +1,58 @@
+.mindmate-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 30px;
+  animation: float 5s ease-in-out infinite;
+}
+
+.mindmate-logo-text {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  background: linear-gradient(90deg, #7f5af0, #00f0ff, #7f5af0);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 8s ease infinite, textGlow 2s ease-in-out infinite;
+}
+
+.mindmate-logo-text span {
+  display: inline-block;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.mindmate-logo-text span:nth-child(1) { animation-delay: 0s; }
+.mindmate-logo-text span:nth-child(2) { animation-delay: 0.1s; }
+.mindmate-logo-text span:nth-child(3) { animation-delay: 0.2s; }
+.mindmate-logo-text span:nth-child(4) { animation-delay: 0.3s; }
+.mindmate-logo-text span:nth-child(5) { animation-delay: 0.4s; }
+.mindmate-logo-text span:nth-child(6) { animation-delay: 0.5s; }
+.mindmate-logo-text span:nth-child(7) { animation-delay: 0.6s; }
+.mindmate-logo-text span:nth-child(8) { animation-delay: 0.7s; }
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes textGlow {
+  0%, 100% {
+    text-shadow: 0 0 8px rgba(127, 90, 240, 0.6), 0 0 20px rgba(0, 240, 255, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 14px rgba(127, 90, 240, 0.9), 0 0 30px rgba(0, 240, 255, 0.6);
+  }
+}

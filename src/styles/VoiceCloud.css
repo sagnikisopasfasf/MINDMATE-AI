@@ -1,0 +1,104 @@
+/* Voice screen container */
+.voice-screen {
+    height: 100vh;
+    width: 100vw;
+    background:transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Controls */
+.controls {
+    position: absolute;
+    bottom: 60px;
+    display: flex;
+    gap: 30px;
+}
+
+.control-btn {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    color: white;
+}
+
+.control-btn.mic {
+    background: #2c2c2c;
+}
+
+.control-btn.end {
+    background: #e63946;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+}
+
+.orb-container {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transform: scale(1);
+  animation: orbGrow 1s ease-out forwards;
+  animation-delay: 0.1s; 
+}
+
+@keyframes orbGrow {
+  0% {
+    transform: scale(1); /* start at full size */
+  }
+  30% {
+    transform: scale(0); /* shrink down */
+  }
+  100% {
+    transform: scale(1); /* grow back */
+  }
+}
+
+
+/* Infinite vertical jiggle */
+@keyframes jiggleUpDown {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-6px); }
+    50% { transform: translateY(4px); }
+    75% { transform: translateY(-2px); }
+}
+
+
+.voice-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Content container */
+.voice-modal-content {
+    position: relative;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 50%;
+    padding: 25px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
