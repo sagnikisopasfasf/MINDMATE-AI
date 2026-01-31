@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mic, PhoneOff } from "lucide-react";
-import "../styles/voiceCloud.css";
+import "../styles/VoiceCloud.css";
 import CloudyOrb from "./CloudyOrb";
 
 const VoiceCloud = ({ assistantVolume, speakWithRachel }) => {
