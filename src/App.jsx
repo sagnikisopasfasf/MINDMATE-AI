@@ -107,7 +107,9 @@ function App() {
   const [listening, setListening] = useState(false);
   const currentVolume = useMicVolume(listening);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const [dismissedLoginModal, setDismissedLoginModal] = useState(false);
+  const [dismissedLoginModal, setDismissedLoginModal] = useState(
+    () => localStorage.getItem("dismissLoginModal") === "true"
+  );
   const [showVoicePreview, setShowVoicePreview] = useState(false);
   const [previewInput, setPreviewInput] = useState(""); // For user voice input
   const [previewListening, setPreviewListening] = useState(false);
@@ -120,7 +122,7 @@ function App() {
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
 
-  const a4fApiKey = "ddc-a4f-ea451e35a968496890c6b79e89ab832f";
+  const a4fApiKey = "sk-WM6A2_qh72Lro-SLKjhYPg";
   const a4fBaseUrl = "https://api.a4f.co/v1";
 
   const a4fClient = new OpenAI({
@@ -531,15 +533,29 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
   }, [chatLog]);
 
   useEffect(() => {
-    if (!user && isGuest && guestMessageCount >= 5 && !dismissedLoginModal) {
+    console.log({
+      user,
+      isGuest,
+      guestMessageCount,
+      dismissedLoginModal,
+    });
+
+    if (
+      !user &&
+      isGuest &&
+      guestMessageCount >= 5 &&
+      !dismissedLoginModal &&
+      !showLoginModal
+    ) {
       setShowLoginModal(true);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     if (user) {
-      setShowLoginModal(false); // close on successful login
+      setShowLoginModal(false);
     }
   }, [guestMessageCount, dismissedLoginModal, isGuest, user]);
+
 
 
   useEffect(() => {
@@ -941,13 +957,21 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
   const sendMessage = async (msgText = input) => {
     if (!msgText.trim()) return;
 
-    // 1️⃣ Start a new chat if none active
+    if (showChips) {
+      setShowChips(false);
+    }
     if (!activeChatId && !showMoodTracker && chatLog.length === 0) {
       await handleNewChat(false); // ensures chatLog is reset safely
     }
 
-    // 2️⃣ Add user's message to chatLog
     const newChatLog = [...chatLog, { from: "user", text: msgText }];
+    setChatLog(newChatLog);
+
+    if (!user && isGuest) {
+      setGuestMessageCount((prev) => prev + 1);
+    }
+
+
     setChatLog(newChatLog);
     setInput("");
     setIsTyping(true);
@@ -1953,22 +1977,22 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                 </div>
               </div>
 
-              {!showJournaling && showWelcome && isGuest && showChips && (
-                <div className="suggestions-below-input">
-                  {suggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      className="suggestion-chip"
-                      onClick={() => {
-                        sendMessage(s);
-                        setShowChips(false);
-                      }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {!showJournaling &&
+                showWelcome &&
+                isGuest &&
+                showChips && (
+                  <div className="suggestions-below-input">
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        className="suggestion-chip"
+                        onClick={() => sendMessage(s)}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
 
               <SendButton isSpeaking={isSpeaking} onSend={sendMessage} onStop={handleStopSpeaking} />

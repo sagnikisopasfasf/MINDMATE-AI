@@ -4,78 +4,114 @@ import * as THREE from "three";
 import useMicVolume from "../hooks/useMicVolume";
 
 // Voice reactive orb particles
-function VoiceOrb({ volume = 0 }) {
-    const pointsRef = useRef();
-    const particleCount = 1500;
-    const radius = 1.2;
+function VoiceOrb({ volume = 0, active = false }) {
+  const pointsRef = useRef();
+  const stateRef = useRef({ wake: 0 });
+  const particleCount = 2200;
+  const baseRadius = 1.12;
 
-    const particles = useMemo(() => {
-        const pos = [];
-        for (let i = 0; i < particleCount; i++) {
-            // Uniform sphere volume fill
-            let u = Math.random();
-            let v = Math.random();
-            let theta = 2 * Math.PI * u;
-            let phi = Math.acos(2 * v - 1);
-            let r = radius * Math.cbrt(Math.random());
-            pos.push(
-                r * Math.sin(phi) * Math.cos(theta),
-                r * Math.sin(phi) * Math.sin(theta),
-                r * Math.cos(phi)
-            );
-        }
-        return new Float32Array(pos);
-    }, []);
+  const data = useMemo(() => {
+    const pos = new Float32Array(particleCount * 3);
+    const angles = new Float32Array(particleCount * 2);
 
-    useFrame(({ clock }) => {
-        const t = clock.getElapsedTime();
-        const positions = pointsRef.current.geometry.attributes.position.array;
+    for (let i = 0; i < particleCount; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
 
-        for (let i = 0; i < particleCount; i++) {
-            const i3 = i * 3;
-            const p = new THREE.Vector3(
-                positions[i3],
-                positions[i3 + 1],
-                positions[i3 + 2]
-            );
+      angles[i * 2] = theta;
+      angles[i * 2 + 1] = phi;
 
-            // Gentle breathing + voice deformation
-            const wobble =
-                Math.sin(t * 8 + i) * 0.025 +
-                Math.cos(t * 5 + i * 1.5) * 0.02;
-            const deform = wobble + volume * 0.3;
+      const r = baseRadius + Math.random() * 0.05;
 
-            p.normalize().multiplyScalar(p.length() + deform);
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+    }
 
-            positions[i3] = p.x;
-            positions[i3 + 1] = p.y;
-            positions[i3 + 2] = p.z;
-        }
+    return { pos, angles };
+  }, []);
 
-        pointsRef.current.geometry.attributes.position.needsUpdate = true;
-    });
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    const pos = pointsRef.current.geometry.attributes.position.array;
+    const ang = data.angles;
 
-    return (
-        <points ref={pointsRef}>
-            <bufferGeometry>
-                <bufferAttribute
-                    attach="attributes-position"
-                    count={particles.length / 3}
-                    array={particles}
-                    itemSize={3}
-                />
-            </bufferGeometry>
-            <pointsMaterial
-                color="#5fdd65ff"
-                size={0.025}
-                sizeAttenuation
-                transparent
-                opacity={0.85}
-                depthWrite={false}
-            />
-        </points>
-    );
+    /* ---------- WAKE STATE ---------- */
+    if (active) {
+      stateRef.current.wake = Math.min(
+        stateRef.current.wake + 0.05,
+        1
+      );
+    } else {
+      stateRef.current.wake = Math.max(
+        stateRef.current.wake - 0.04,
+        0
+      );
+    }
+
+    const wake = stateRef.current.wake;
+
+    /* ---------- MOTION ---------- */
+    const breathe = Math.sin(t * 2) * 0.06;
+    const voice = Math.min(volume * 0.9, 0.6);
+    const swirl = t * (0.2 + wake * 0.8);
+
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3;
+      const i2 = i * 2;
+
+      const theta = ang[i2] + swirl;
+      const phi =
+        ang[i2 + 1] +
+        Math.sin(t * 1.8 + i * 0.03) * (0.1 + wake * 0.25);
+
+      const r =
+        baseRadius +
+        breathe +
+        voice * wake +
+        Math.sin(t * 6 + i) * 0.02 * wake;
+
+      pos[i3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i3 + 2] = r * Math.cos(phi);
+    }
+
+    /* ---------- GLOBAL FEEL ---------- */
+    pointsRef.current.rotation.y += 0.002 + wake * 0.01;
+    pointsRef.current.rotation.x = Math.sin(t * 0.4) * 0.08;
+
+    const scale = 0.92 + wake * 0.18 + voice * 0.12;
+    pointsRef.current.scale.setScalar(scale);
+
+    pointsRef.current.material.opacity = 0.35 + wake * 0.65;
+
+    pointsRef.current.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          array={data.pos}
+          count={data.pos.length / 3}
+          itemSize={3}
+        />
+      </bufferGeometry>
+
+      <pointsMaterial
+        color="#f3f4f6"
+        size={0.028}
+        transparent
+        opacity={0.8}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        sizeAttenuation
+      />
+    </points>
+  );
 }
+
 
 // Main Component
 export default function VoiceReactiveOrb() {
@@ -104,10 +140,15 @@ export default function VoiceReactiveOrb() {
             }}
         >
             <audio ref={audioRef} style={{ display: "none" }} />
-            <Canvas gl={{ alpha: true }} camera={{ position: [0, 0, 3] }}>
-                <ambientLight intensity={0.9} />
-                <VoiceOrb volume={volume} />
-            </Canvas>
+            <Canvas
+  gl={{ alpha: true, antialias: true }}
+  camera={{ position: [0, 0, 3.3], fov: 55 }}
+>
+  <ambientLight intensity={0.4} />
+  <VoiceOrb volume={volume} />
+</Canvas>
+
+
         </div>
     );
 }

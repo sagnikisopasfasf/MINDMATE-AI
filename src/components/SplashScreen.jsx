@@ -4,15 +4,9 @@ import logo from "../assets/logo.jpg"; // Rename your uploaded file to `logo.jpg
 
 const SplashScreen = ({ onFinish }) => {
   useEffect(() => {
-    const timer = setTimeout(onFinish, 4000); // Stay for 4s
+    const timer = setTimeout(onFinish, 3000); 2
     return () => clearTimeout(timer);
   }, [onFinish]);
-
-  useEffect(() => {
-    const chime = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_4f3b7fb323.mp3");
-    chime.volume = 0.5;
-    chime.play().catch(() => {});
-  }, []);
 
   return (
     <div className="splash-screen">

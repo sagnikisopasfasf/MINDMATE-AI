@@ -117,6 +117,7 @@ const Topbar = ({ user, onLogout, onToggleSidebar, sidebarOpen, goToPremium, onO
           </button>
           <button
             className="px-4 py-1 rounded-md bg-white text-purple-700 font-semibold hover:bg-gray-100"
+            onClick={onLoginClick}
           >
             Sign Up
           </button>
