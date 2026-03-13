@@ -541,8 +541,6 @@ textarea {
   margin-top: 12px;
 }
 
-
-/* ✅ Wrapper Layout */
 .chatgpt-wrapper {
   display: flex;
   flex-direction: row;
@@ -552,23 +550,19 @@ textarea {
   position: relative;
 }
 
-/* ✅ Sidebar */
 .sidebar-container {
-  /* remove fixed width here — width is driven by inner .sidebar */
-  width: 260px;
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
+  width: auto; /* remove fixed width */
   z-index: 1000;
-  /* let sidebar set its own width */
-  transition: width 0.28s ease, transform 0.28s ease;
+
+  transition: transform 0.28s ease;
   overflow: visible;
-  /* allow inner shadows/arrow to show */
+
   background: transparent;
-  /* avoid black strip behind inner sidebar */
   pointer-events: none;
-  /* container itself shouldn't block clicks - inner sidebar will */
 }
 
 
@@ -924,9 +918,6 @@ textarea {
 }
 
 
-.sidebar-container.visible {
-  transform: translateX(0);
-}
 
 .sidebar {
   padding: 20px;
@@ -1310,16 +1301,15 @@ body[data-theme="aurora"] {
 }
 
 .main-area {
-  flex: 1;
-  height: calc(var(--vh, 1vh) * 100);
+  position: relative;
   margin-left: 260px;
+  flex: 1;
+  width: calc(100vw - 260px);
+  height: calc(var(--vh, 1vh) * 100);
   display: flex;
   flex-direction: column;
-  position: relative;
   overflow: hidden;
-  background: transparent;
-  transition: margin-left 0.3s ease-in-out;
-  width: 100%;
+  transition: margin-left 0.3s ease;
 }
 
 /* When sidebar is visible, push content */
@@ -1360,15 +1350,17 @@ body[data-theme="aurora"] {
   align-items: center;
   /* center bubbles inside */
   box-sizing: border-box;
-
   width: 100%;
+  ;
+  margin: 0 auto;
   /* ✅ take full width */
 }
 
+
 .chat-log>* {
   width: 100%;
-  max-width: 750px;
-  /* ✅ center limit like ChatGPT */
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 
@@ -1565,9 +1557,14 @@ body[data-theme="aurora"] {
 
 /* Welcome mode: input bar sits under text */
 .floating-input-bar.welcome-mode {
-  position: sticky;
-  padding-right: 260px;
-  padding-bottom: 240px;
+  position: absolute;
+  top: calc(50% + 60px);
+  left: 50%;
+  transform: translateX(-60%);
+
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 /* Chat mode: fixed at bottom like ChatGPT */
@@ -1690,15 +1687,30 @@ body[data-theme="aurora"] {
     jiggle-up-down 0.9s ease-in-out infinite;
 }
 
-.bar:nth-child(1){ animation-delay:0s }
-.bar:nth-child(2){ animation-delay:0.15s }
-.bar:nth-child(3){ animation-delay:0.3s }
-.bar:nth-child(4){ animation-delay:0.45s }
-.bar:nth-child(5){ animation-delay:0.6s }
+.bar:nth-child(1) {
+  animation-delay: 0s
+}
+
+.bar:nth-child(2) {
+  animation-delay: 0.15s
+}
+
+.bar:nth-child(3) {
+  animation-delay: 0.3s
+}
+
+.bar:nth-child(4) {
+  animation-delay: 0.45s
+}
+
+.bar:nth-child(5) {
+  animation-delay: 0.6s
+}
 
 @keyframes height-scale {
 
-  0%,100% {
+  0%,
+  100% {
     height: 8px;
   }
 
@@ -1707,9 +1719,11 @@ body[data-theme="aurora"] {
   }
 
 }
+
 @keyframes jiggle-up-down {
 
-  0%,100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
 
@@ -1718,6 +1732,7 @@ body[data-theme="aurora"] {
   }
 
 }
+
 /* Container for the action buttons */
 .voice-preview-actions {
   display: flex;
@@ -2242,19 +2257,27 @@ button {
 
 
 .welcome-container {
-  flex: 1;
   position: absolute;
   top: 50%;
   left: 40%;
-  transform: translate(-50%, -50%);
-  /* stays fixed */
+  transform: translate(-50%, -60%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+
   text-align: center;
   width: 100%;
+  max-width: 700px;
+
   pointer-events: none;
 }
 
 .welcome-text {
   font-size: 24px;
+
   font-weight: 400;
   line-height: 1.5;
   text-align: center;
@@ -2277,18 +2300,6 @@ button {
   text-shadow: none !important;
 }
 
-/* Small screens */
-@media (max-width: 768px) {
-  .welcome-text {
-    font-size: 1.1rem;
-    padding: 0 8px;
-
-  }
-
-  .welcome-container {
-    left: 50.3%;
-  }
-}
 
 
 
@@ -3252,222 +3263,3 @@ button {
   }
 }
 
-
-/* ========== MOBILE LAYOUT (max-width: 480px) ========== */
-@media (max-width: 480px) {
-
-  html,
-  body,
-  #root {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    font-size: 14px;
-    overflow-x: hidden;
-  }
-
-  /* Sidebar: overlay instead of fixed width */
-  .sidebar-container {
-    /* remove fixed width here — width is driven by inner .sidebar */
-    max-width: 260px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 1000;
-    /* let sidebar set its own width */
-    transition: width 0.28s ease, transform 0.28s ease;
-    overflow: visible;
-    /* allow inner shadows/arrow to show */
-    background: transparent;
-    /* avoid black strip behind inner sidebar */
-    pointer-events: none;
-    /* container itself shouldn't block clicks - inner sidebar will */
-  }
-
-  .logo-icon {
-    transform: translate(-180%);
-  }
-
-  .brand-title {
-    transform: translate(-70%)
-  }
-
-  .sidebar.expanded {
-    backdrop-filter: blur(7px);
-  }
-
-  .sidebar.collapsed {
-    left: -100%;
-  }
-
-  .sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 50;
-  }
-
-
-
-  .floating-input-bar.welcome-mode {
-    position: sticky;
-    bottom: auto;
-    width: 95%;
-    /* distance from top */
-    padding-bottom: 120px;
-    display: flex;
-    justify-content: center;
-  }
-
-  .scroll-to-bottom-btn {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    /* start slightly lower */
-    z-index: 100;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease, background 0.2s ease;
-    outline: none;
-  }
-
-  .sidebar-container.visible {
-    transform: translateX(-100);
-    background: transparent;
-  }
-
-  .main-area {
-    margin-left: 0 !important;
-    width: 100%;
-    height: 100dvh;
-  }
-
-  .chat-log {
-    padding: 60px 12px 120px 12px;
-  }
-
-  .chat-log>* {
-    max-width: 95%;
-  }
-
-  .chat-bubble {
-    font-size: 14px;
-    padding: 10px 14px;
-    border-radius: 12px;
-  }
-
-  .chat-row.user .chat-bubble {
-    border-bottom-right-radius: 4px;
-  }
-
-  .chat-row.bot .chat-bubble {
-    border-bottom-left-radius: 4px;
-  }
-
-  /* Floating input bar */
-  .floating-input-bar {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 10px 12px;
-  }
-
-  .input-inner {
-    height: 48px;
-    padding: 0 12px;
-  }
-
-  .input-box {
-    font-size: 14px;
-    padding: 2px 0;
-    max-height: 100px;
-  }
-
-  /* Journaling box */
-  .journal-box {
-    width: 95vw;
-    max-width: 95vw;
-    padding: 14px;
-    border-radius: 16px;
-    max-height: 70vh;
-  }
-
-  .journal-box textarea {
-    width: 90vw;
-    height: 55vh;
-    font-size: 14px;
-  }
-
-  .journal-brick {
-    width: 95%;
-    font-size: 14px;
-    max-height: 150px;
-  }
-
-  .new-diary-btn {
-    width: 30%;
-    height: 50px;
-  }
-
-  /* Buttons scaling */
-  .send-button-animated,
-  .icon-btn,
-  .voice-preview-actions button {
-    width: auto;
-    height: 44px;
-    font-size: 14px;
-  }
-
-  .profile-avatar {
-    width: 36px;
-    height: 36px;
-  }
-
-  .topbar {
-    height: 60px;
-    padding: 0 12px;
-  }
-
-  .typing-indicator {
-    padding: 8px 12px;
-    border-radius: 12px;
-  }
-
-  .typing-indicator .dot {
-    width: 6px;
-    height: 6px;
-  }
-
-  /* Modals */
-  .modal-cont,
-  .voice-modal {
-    width: 90%;
-    padding: 16px;
-  }
-
-  /* Emojis / mood selector */
-  .emoji-btn {
-    font-size: 18px;
-    left: 10%;
-    padding-top: 200px;
-  }
-
-  .voice-preview-actions {
-    flex-direction: column;
-    gap: 8px;
-  }
-}
