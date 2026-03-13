@@ -8,6 +8,10 @@ html, body {
   overflow: hidden !important;  
 }
 
+:root {
+  --topbar-height: 64px;
+}
+
 ::-webkit-scrollbar {
  overflow: hidden !important; 
  display: none !important;

@@ -1225,18 +1225,22 @@ body[data-theme="aurora"] {
   top: 0;
   left: 0;
   right: 0;
-  height: 65px;
-  /* adjust based on your design */
+  height: var(--topbar-height);
   z-index: 3;
-  backdrop-filter: blur(10px);
-  /* this applies the blur */
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--text-color);
-  /* keep background solid */
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   padding: 0 16px;
+
+  backdrop-filter: blur(10px);
+}
+.sidebar {
+  padding-top: calc(var(--topbar-height) + 10px);
+}
+.main-area {
+  margin-top: var(--topbar-height);
 }
 
 /* Guest Buttons Container */
