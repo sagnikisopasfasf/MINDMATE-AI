@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/__/auth/(.*)",
+      "destination": "https://mind-mate-94675.firebaseapp.com/__/auth/$1"
+    }
+  ]
+}
