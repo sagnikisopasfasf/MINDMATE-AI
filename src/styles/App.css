@@ -603,9 +603,9 @@ textarea {
   padding: 6px 10px;
   border-radius: 30px;
   cursor: pointer;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .slide-toggle .toggle-option {
@@ -702,9 +702,18 @@ textarea {
 
 .new-chat-btn span,
 .chat-header,
-.search-container,
 .chat-title {
   transition: opacity 0.2s ease;
+}
+
+.search-container {
+  cursor: pointer;
+  user-select: none;
+}
+
+.search-placeholder {
+  cursor: pointer;
+  user-select: none;
 }
 
 .sidebar.collapsed .new-chat-btn span,
@@ -1671,46 +1680,45 @@ body[data-theme="aurora"] {
 
 .bar {
   width: 2px;
-  height: 2px;
+  height: 8px;
   background: white;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3),
-    inset 0 1px 2px rgba(255, 255, 255, 0.3);
-  outline: none;
   border-radius: 1px;
   display: inline-block;
-  animation: height-scale 1ms ease-in-out infinite, jiggle-up-down 1ms ease-in-out infinite;
-  ;
   transform-origin: center bottom;
+
+  animation:
+    height-scale 0.9s ease-in-out infinite,
+    jiggle-up-down 0.9s ease-in-out infinite;
 }
 
+.bar:nth-child(1){ animation-delay:0s }
+.bar:nth-child(2){ animation-delay:0.15s }
+.bar:nth-child(3){ animation-delay:0.3s }
+.bar:nth-child(4){ animation-delay:0.45s }
+.bar:nth-child(5){ animation-delay:0.6s }
 
 @keyframes height-scale {
 
-  0%,
-  100% {
-    height: 12px;
+  0%,100% {
+    height: 8px;
+  }
+
+  50% {
+    height: 16px;
   }
 
 }
-
 @keyframes jiggle-up-down {
 
-  0%,
-  100% {
+  0%,100% {
     transform: translateY(0);
   }
 
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-4px);
   }
 
-  75% {
-    transform: translateY(5px);
-  }
 }
-
 /* Container for the action buttons */
 .voice-preview-actions {
   display: flex;
@@ -2745,8 +2753,13 @@ button {
 
 /* ===== Animations ===== */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes scaleIn {
@@ -2754,6 +2767,7 @@ button {
     transform: scale(0.95);
     opacity: 0.8;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -2796,8 +2810,9 @@ button {
 }
 
 .action-btn.liked svg {
-  fill: white;       /* Fill the thumb */
- 
+  fill: white;
+  /* Fill the thumb */
+
 }
 
 @keyframes fadeIn {
@@ -2805,6 +2820,7 @@ button {
     opacity: 0;
     transform: translate(-50%, -5px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -2816,6 +2832,7 @@ button {
     opacity: 1;
     transform: translate(-50%, 0);
   }
+
   to {
     opacity: 0;
     transform: translate(-50%, -5px);
@@ -2887,6 +2904,7 @@ button {
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2901,79 +2919,283 @@ button {
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
 }
 
-.share-modal-overlay {
+/* OVERLAY */
+
+.share-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  backdrop-filter: blur(50px);
+
+  background: rgba(0, 0, 0, .65);
+  backdrop-filter: blur(6px);
+
   z-index: 9999;
-  animation: fadeIn 0.25s ease-out;
 }
 
 .share-modal {
-  width: 440px;
-  height: 300px;
-  max-width: 100%;
-  background:transparent;
-  border-radius: 16px;
-  padding: 24px;
-  color: #fff;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-  animation: slideUp 0.3s ease-out;
-  overflow: hidden;
+  position: relative;
+  z-index: 10000;
 }
+
+
+/* MODAL */
+
+.share-modal {
+  width: 640px;
+  max-width: 92%;
+
+  background: #111;
+  border-radius: 26px;
+
+  padding: 28px;
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, .8),
+    0 0 0 1px rgba(255, 255, 255, .05);
+}
+
+/* share x icon */
+.share-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.share-circle svg {
+  display: block;
+  margin: auto;
+}
+
+.share-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.share-modal.closing {
+  animation: modalClose .18s ease forwards;
+}
+
+@keyframes modalClose {
+  to {
+    opacity: 0;
+    transform: scale(.96) translateY(8px);
+  }
+}
+
+.share-modal {
+  animation: modalOpen .25s cubic-bezier(.16, 1, .3, 1);
+}
+
+@keyframes modalOpen {
+  from {
+    opacity: 0;
+    transform: scale(.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* HEADER */
 
 .share-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
 }
 
 .share-modal-header h3 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
   margin: 0;
 }
+
+
+/* CLOSE BUTTON */
 
 .close-share {
   background: none;
   border: none;
   color: #aaa;
-  font-size: 22px;
+  font-size: 24px;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: .2s;
 }
 
 .close-share:hover {
   color: #fff;
 }
 
-.share-preview {
-  background: transparent;           /* slightly lighter than modal */
-  backdrop-filter: blur(15px);      /* stronger blur for better contrast */
-  border-radius: 12px;
-  padding: 10px 60px;
-  margin: 16px 0;
-  color: #e0e0e0;                /* softer text color */
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 1.55;
-  max-height: 150px;             /* prevents overflow */
-  overflow-y: auto;              /* scroll if text too long */
-  white-space: pre-wrap;  
+
+/* PREVIEW CONTAINER */
+
+.share-preview-container {
+  margin-top: 18px;
+  margin-bottom: 26px;
+
+  height: 220px;
+  border-radius: 18px;
+
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, .08),
+      rgba(255, 255, 255, .03));
+
+  padding: 22px;
+
+  position: relative;
+  overflow: hidden;
 }
 
-.share-preview::-webkit-scrollbar {
-  width: 0px;
-  background-color: transparent;
+
+/* PREVIEW TEXT */
+
+.share-preview-text {
+  max-width: 75%;
+  font-size: 15px;
+  color: #e4e4e4;
+  line-height: 1.6;
+  opacity: .9;
 }
-.share-preview::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  border-radius: 0px;
+
+
+/* FLOATING CARD */
+
+.share-preview-card {
+  position: absolute;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  width: 240px;
+
+  background: #0f0f0f;
+  padding: 14px;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, .7),
+    0 0 0 1px rgba(255, 255, 255, .04);
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+
+/* APP HEADER */
+
+.preview-app {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.preview-app img {
+  width: 18px;
+  height: 18px;
+}
+
+
+/* CARD TEXT */
+
+.preview-card-text {
+  font-size: 12px;
+  color: #bbb;
+}
+
+
+/* WATERMARK */
+
+.preview-watermark {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+
+  font-size: 22px;
+  font-weight: 600;
+  opacity: .9;
+}
+
+
+/* SHARE BUTTONS */
+
+.share-actions {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 6px;
+}
+
+.share-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.share-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+
+  background: #e5e5e5;
+  color: black;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+  cursor: pointer;
+
+  transition: .18s;
+}
+
+.share-circle:hover {
+  transform: scale(1.12);
+}
+
+
+/* ANIMATIONS */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0
+  }
+
+  to {
+    opacity: 1
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .share-buttons {
@@ -2983,8 +3205,8 @@ button {
 }
 
 .share-btn {
-  background:transparent;
-  
+  background: transparent;
+
   border: none;
   color: #fff;
   width: 60px;
@@ -3012,6 +3234,7 @@ button {
     opacity: 0;
     backdrop-filter: blur(0px);
   }
+
   to {
     opacity: 1;
     backdrop-filter: blur(10px);
@@ -3023,6 +3246,7 @@ button {
     transform: translateY(40px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -3081,9 +3305,11 @@ button {
 
   .sidebar-overlay {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.4);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
     z-index: 50;
   }
 
@@ -3246,4 +3472,3 @@ button {
     gap: 8px;
   }
 }
-

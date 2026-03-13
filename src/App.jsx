@@ -14,7 +14,7 @@ import {
   RefreshCcw,
   MoreHorizontal,
 } from "lucide-react";
-
+import SearchChatsModal from "./components/SearchChatsModal";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import JournalChatScreen from "./components/JournalChatScreen";
 import { useLocation } from "react-router-dom";
@@ -76,7 +76,16 @@ function App() {
     { from: "bot", text: "How are you?", liked: false, disliked: false },
   ]);
   const [mode1, setMode2] = useState("therapy");
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [closingShare, setClosingShare] = useState(false);
+  const closeShareModal = () => {
+    setClosingShare(true);
 
+    setTimeout(() => {
+      setShowShareModal(false);
+      setClosingShare(false);
+    }, 200);
+  };
   const [chatTitles, setChatTitles] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -1256,8 +1265,7 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                 onSelectChat={handleSelectChat}
                 activeChatId={activeChatId}
                 onDeleteChat={handleDeleteChat}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
+                onOpenSearch={() => setShowSearchModal(true)}
                 onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
                 onOpenJournaling={handleOpenJournaling}
                 collapsed={collapsed}
@@ -1291,7 +1299,14 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                 onClose={() => setSettingsOpen(false)}
                 onLogout={() => console.log("Logout")}
               />
-
+              <SearchChatsModal
+                isOpen={showSearchModal}
+                onNewChat={() => handleNewChat(false)}
+                onClose={() => setShowSearchModal(false)}
+                chatTitles={chatTitles}
+                activeChatId={activeChatId}
+                onSelectChat={handleSelectChat}
+              />
 
               <div className="chat-body" >
 
@@ -1304,6 +1319,7 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                   <div className="chat-log" ref={chatBodyRef}>
 
                     {chatLog.map((msg, i) => {
+
                       if (showJournaling && msg.type === "journal") {
 
                         // Skip rendering journal entries here when journaling UI is open
@@ -1533,212 +1549,6 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                           )}
 
 
-                          {showFeedbackModal && (
-                            <div
-                              className="feedback-modal-overlay"
-                              onClick={() => setShowFeedbackModal(false)}
-                            >
-                              <div
-                                className="feedback-modal"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="feedback-modal-header">
-                                  <h4>Share more feedback</h4>
-                                  <button onClick={() => setShowFeedbackModal(false)}>✕</button>
-                                </div>
-
-                                <textarea
-                                  value={customFeedback}
-                                  onChange={(e) => setCustomFeedback(e.target.value)}
-                                  placeholder="Tell us how we can improve this response..."
-                                />
-
-                                <div className="feedback-modal-actions">
-                                  <button
-                                    onClick={() => {
-                                      console.log("Custom feedback:", customFeedback);
-                                      setCustomFeedback("");
-                                      setShowFeedbackModal(false);
-                                      setSuggestionIndex(null);
-                                    }}
-                                  >
-                                    Submit
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {showShareModal && (
-                            <div
-                              className="share-modal-overlay"
-                              onClick={() => setShowShareModal(false)}
-                            >
-                              <div
-                                className="share-modal"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="share-modal-header">
-                                  <h3>Share this message</h3>
-                                  <button
-                                    className="close-share"
-                                    onClick={() => setShowShareModal(false)}
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-
-                                <p className="share-preview">
-                                  {shareText.slice(0, shareText.length) + "…"}
-                                </p>
-
-
-                                <div className="share-buttons">
-
-                                  <button
-                                    className="share-btn"
-                                    title="WhatsApp"
-                                    onClick={() =>
-                                      window.open(
-                                        `https://api.whatsapp.com/send?text=${encodeURIComponent(
-                                          shareText
-                                        )}`,
-                                        "_blank"
-                                      )
-                                    }
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="22"
-                                      height="22"
-                                      fill="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M20.52 3.48a11.88 11.88 0 00-16.83 0 11.85 11.85 0 00-3.47 8.44c0 2.1.55 4.16 1.59 5.97L0 24l5.24-1.38a11.85 11.85 0 005.91 1.59c3.19 0 6.37-1.22 8.76-3.47a11.88 11.88 0 000-16.84zM12 21c-2.26 0-4.49-.61-6.42-1.77l-.46-.27-3.11.82.83-3.04-.3-.47A9.908 9.908 0 012 12c0-5.52 4.48-10 10-10s10 4.48 10 10-4.48 10-10 10zm5.03-7.78c-.28-.14-1.66-.82-1.92-.91-.26-.09-.45-.14-.64.14-.19.28-.73.91-.9 1.1-.16.19-.32.21-.6.07-.28-.14-1.18-.44-2.25-1.38-.83-.74-1.39-1.65-1.56-1.93-.16-.28-.02-.43.12-.57.12-.12.28-.32.42-.48.14-.16.19-.28.28-.46.09-.19.04-.35-.02-.49-.06-.14-.64-1.54-.88-2.12-.23-.56-.47-.48-.64-.49l-.55-.01c-.19 0-.49.07-.74.35s-.97.95-.97 2.31 1 2.68 1.14 2.87c.14.19 1.97 3.01 4.77 4.22.67.29 1.19.46 1.6.59.67.22 1.28.19 1.76.12.54-.08 1.66-.68 1.89-1.34.23-.66.23-1.23.16-1.35-.07-.12-.26-.19-.54-.33z" />                                    </svg>
-                                  </button>
-
-                                  <button
-                                    className="share-btn"
-                                    title="Facebook"
-                                    onClick={() =>
-                                      window.open(
-                                        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                                          shareText
-                                        )}`,
-                                        "_blank"
-                                      )
-                                    }
-
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="22"
-                                      height="22"
-                                      fill="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M22.675 0h-21.35C.596 0 0 .593 0 1.326v21.348C0 23.406.596 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.464.099 2.794.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.762v2.31h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.324-.594 1.324-1.326V1.326C24 .593 23.405 0 22.675 0z" />
-                                    </svg>
-                                  </button>
-
-                                  <button
-                                    className="share-btn"
-                                    title="Instagram"
-                                    onClick={() =>
-                                      window.open(
-                                        `https://www.instagram.com/sharer/sharer.php?u=${encodeURIComponent(
-                                          shareText
-                                        )}`,
-                                        "_blank"
-                                      )
-                                    }
-
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="22"
-                                      height="22"
-                                      fill="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M12 2.2c3.2 0 3.584.012 4.85.07 1.17.055 1.96.24 2.42.4.6.22 1.03.48 1.48.93.45.45.71.88.93 1.48.16.46.34 1.25.4 2.42.058 1.27.07 1.65.07 4.85s-.012 3.584-.07 4.85c-.055 1.17-.24 1.96-.4 2.42-.22.6-.48 1.03-.93 1.48-.45.45-.88.71-1.48.93-.46.16-1.25.34-2.42.4-1.27.058-1.65.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.055-1.96-.24-2.42-.4-.6-.22-1.03-.48-1.48-.93-.45-.45-.71-.88-.93-1.48-.16-.46-.34-1.25-.4-2.42C2.212 15.584 2.2 15.2 2.2 12s.012-3.584.07-4.85c.055-1.17.24-1.96.4-2.42.22-.6.48-1.03.93-1.48.45-.45.88-.71 1.48-.93.46-.16 1.25-.34 2.42-.4C8.416 2.212 8.8 2.2 12 2.2zm0-2.2C8.736 0 8.332.012 7.052.07 5.74.128 4.785.31 4.042.54 3.1.84 2.345 1.282 1.655 1.972.964 2.662.522 3.417.22 4.36c-.23.743-.412 1.698-.47 3.01C-.012 8.332 0 8.736 0 12s.012 3.668.07 4.948c.058 1.312.24 2.267.47 3.01.302.943.744 1.698 1.435 2.39.69.69 1.446 1.133 2.39 1.435.743.23 1.698.412 3.01.47C8.332 23.988 8.736 24 12 24s3.668-.012 4.948-.07c1.312-.058 2.267-.24 3.01-.47.943-.302 1.698-.744 2.39-1.435.69-.69 1.133-1.446 1.435-2.39.23-.743.412-1.698.47-3.01.058-1.28.07-1.684.07-4.948s-.012-3.668-.07-4.948c-.058-1.312-.24-2.267-.47-3.01-.302-.943-.744-1.698-1.435-2.39-.69-.69-1.446-1.133-2.39-1.435-.743-.23-1.698-.412-3.01-.47C15.668.012 15.264 0 12 0zm0 5.8a6.2 6.2 0 100 12.4 6.2 6.2 0 000-12.4zm0 10.2a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 11-2.88 0 1.44 1.44 0 012.88 0z" />
-                                    </svg>
-                                  </button>
-
-                                  <button
-                                    className="share-btn"
-                                    title="X (Twitter)"
-                                    onClick={() =>
-                                      window.open(
-                                        `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                                          shareText
-                                        )}`,
-                                        "_blank"
-                                      )
-                                    }
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="22"
-                                      height="22"
-                                      fill="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M18.244 2H21.6l-7.362 8.396L22 22h-5.656l-4.417-5.768L6.79 22H3.428l7.89-9.001L2 2h5.77l3.996 5.24L18.244 2zm-1.07 18h1.182L8.019 4h-1.26l10.415 16z" />
-                                    </svg>
-                                  </button>
-
-                                  <button
-                                    className="share-btn"
-                                    title="LinkedIn"
-                                    onClick={() =>
-                                      window.open(
-                                        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                                          "https://your-site.com"
-                                        )}&text=${encodeURIComponent(shareText)}`,
-                                        "_blank"
-                                      )
-                                    }
-                                  >
-                                    {/* LinkedIn icon SVG */}
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="20"
-                                      height="20"
-                                      fill="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M4.98 3C3.34 3 2 4.34 2 5.98s1.34 2.98 2.98 2.98S7.96 7.62 7.96 5.98 6.62 3 4.98 3zM2.4 21h5.16V8.4H2.4V21zM9.6 8.4v12.6h5.04v-6.84c0-1.8 2.28-1.94 2.28 0V21h5.04v-7.68c0-5.28-5.88-5.1-7.32-2.52V8.4H9.6z" />
-                                    </svg>
-                                  </button>
-
-                                  <button
-                                    className="share-btn"
-                                    title="Reddit"
-                                    onClick={() =>
-                                      window.open(
-                                        `https://www.reddit.com/submit?title=${encodeURIComponent(
-                                          "Shared from MyApp"
-                                        )}&text=${encodeURIComponent(shareText)}`,
-                                        "_blank"
-                                      )
-                                    }
-                                  >
-                                    {/* Reddit icon SVG */}
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="20"
-                                      height="20"
-                                      fill="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M24 12.3c0-1.3-1-2.3-2.3-2.3-.7 0-1.3.3-1.8.8-1.7-1.2-4.1-1.9-6.7-2l1.4-4.5 3.9.9c0 .9.8 1.7 1.8 1.7 1 0 1.8-.8 1.8-1.8S21.3 3 20.3 3c-.7 0-1.3.4-1.6 1l-4.4-1c-.4-.1-.7.1-.8.5l-1.6 5c-2.7.1-5.1.8-6.8 2-.5-.5-1.1-.8-1.8-.8C1 10 0 11 0 12.3c0 .9.5 1.6 1.2 2-.1.3-.2.7-.2 1.1 0 3.2 4.3 5.8 9.7 5.8s9.7-2.6 9.7-5.8c0-.4-.1-.7-.2-1.1.8-.3 1.3-1.1 1.3-2zM7.3 13.3c0-.8.7-1.4 1.4-1.4.8 0 1.4.7 1.4 1.4 0 .8-.7 1.4-1.4 1.4-.8 0-1.4-.7-1.4-1.4zm8.3 4.3c-1 .7-2.3 1-3.3 1s-2.3-.3-3.3-1c-.2-.2-.3-.5-.1-.7.2-.2.5-.3.7-.1 1.6 1.1 4 1.1 5.6 0 .2-.2.6-.1.7.1.2.2.1.6-.3.7zM17 14.7c-.8 0-1.4-.7-1.4-1.4 0-.8.7-1.4 1.4-1.4.8 0 1.4.7 1.4 1.4 0 .8-.7 1.4-1.4 1.4z" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
 
 
                           {msg.type === "moodPrompt" && (
@@ -1763,6 +1573,7 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                       );
                     })}
 
+
                     <button
                       className={`scroll-to-bottom-btn ${showScrollButton ? "show" : ""}`}
                       onClick={scrollToBottom}
@@ -1774,7 +1585,105 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                   </div>
                 )}
               </div>
+              {showShareModal && (
+                <div className="share-overlay" onClick={closeShareModal}>
+                  <div
+                    className={`share-modal ${closingShare ? "closing" : ""}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="share-header">
+                      <h2>MindMate Mental Health System</h2>
 
+                      <button className="share-close" onClick={closeShareModal}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div className="share-divider" />
+
+                    <div className="share-preview-container">
+
+                      {/* Background conversation preview */}
+                      <div className="share-preview-text">
+                        {shareText.slice(0, 220)}
+                      </div>
+
+
+
+                      {/* Watermark like ChatGPT */}
+                      <div className="preview-watermark">
+                        MindMate
+                      </div>
+
+                    </div>
+                    {/* Share Buttons */}
+                    <div className="share-actions">
+
+                      <div className="share-action">
+                        <div className="share-circle" onClick={() => navigator.clipboard.writeText(shareText)}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2">
+                            <path d="M10 13a5 5 0 0 0 7.07 0l3.54-3.54a5 5 0 1 0-7.07-7.07L11 4" />
+                            <path d="M14 11a5 5 0 0 0-7.07 0L3.39 14.54a5 5 0 1 0 7.07 7.07L13 20" />
+                          </svg>
+                        </div>
+                        <span>Copy link</span>
+                      </div>
+
+                      <div className="share-action">
+                        <div
+                          className="share-circle"
+                          onClick={() =>
+                            window.open(
+                              `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`
+                            )
+                          }
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
+                            <path d="M18 2h3l-7.5 8.6L22 22h-6.8l-5.3-6.9L3.5 22H0l8-9.2L0 2h7l4.8 6.3L18 2z" />
+                          </svg>
+                        </div>
+                        <span>X</span>
+                      </div>
+
+                      <div className="share-action">
+                        <div
+                          className="share-circle"
+                          onClick={() =>
+                            window.open(
+                              `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareText)}`
+                            )
+                          }
+                        >
+                          <svg width="20" height="15" viewBox="0 0 24 24" fill="black">
+                            <path d="M6.94 6.5a1.94 1.94 0 1 1 0-3.88 1.94 1.94 0 0 1 0 3.88zM4.5 8h4.8v12H4.5zM13 8h4.6v1.7h.07c.64-1.2 2.2-2.46 4.53-2.46 4.84 0 5.73 3.19 5.73 7.34V20H23v-4.93c0-1.18-.02-2.7-1.65-2.7-1.66 0-1.91 1.3-1.91 2.63V20H14V8z" />
+                          </svg>
+                        </div>
+                        <span>LinkedIn</span>
+                      </div>
+
+                      <div className="share-action">
+                        <div
+                          className="share-circle"
+                          onClick={() =>
+                            window.open(
+                              `https://reddit.com/submit?text=${encodeURIComponent(shareText)}`
+                            )
+                          }
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="black">
+                            <path d="M22 12c0-1.1-.9-2-2-2-.6 0-1.1.2-1.4.6-1.3-.9-3-1.5-4.8-1.6l1-3.1 2.6.6c0 .9.7 1.6 1.6 1.6.9 0 1.6-.7 1.6-1.6s-.7-1.6-1.6-1.6c-.6 0-1.2.3-1.4.9l-3.2-.7c-.3-.1-.6.1-.7.4l-1.2 3.7c-1.9.1-3.7.7-5 1.6-.4-.3-.9-.6-1.5-.6-1.1 0-2 .9-2 2 0 .8.4 1.4 1 1.8-.1.4-.1.7-.1 1.1 0 3 3.6 5.4 8 5.4s8-2.4 8-5.4c0-.4 0-.7-.1-1.1.7-.4 1.1-1 1.1-1.8z" />
+                          </svg>
+                        </div>
+                        <span>Reddit</span>
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div
 
@@ -2093,6 +2002,7 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
       />
       {/* Premium Page */}
 
+
       <Route path="/premium" element={<Premium user={user} />} />
       <Route
         path="/login"
@@ -2119,6 +2029,7 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
       <Route path="/nearby-doctors" element={<NearbyDoctors />} />
       <Route path="/appointments" element={<Appointments />} />
       <Route path="/health-reports" element={<HealthReports />} />
+      
 
 
     </Routes >
