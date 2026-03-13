@@ -1225,19 +1225,19 @@ body[data-theme="aurora"] {
   top: 0;
   left: 0;
   right: 0;
-  height: var(--topbar-height);
+  height: 65px;
+  /* adjust based on your design */
   z-index: 3;
-
+  backdrop-filter: blur(10px);
+  /* this applies the blur */
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text-color);
+  /* keep background solid */
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   padding: 0 16px;
-
-  backdrop-filter: blur(10px);
 }
-
-
 
 /* Guest Buttons Container */
 .guest-buttons {
