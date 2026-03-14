@@ -6,6 +6,7 @@ import {
   signInWithPopup,
   signOut,
 } from "./firebase";
+import { getDocs } from "firebase/firestore";
 import {
   Copy,
   ThumbsUp,
@@ -53,7 +54,6 @@ import VoicePulseLine from "./components/VoicePulseLine";
 import useMicVolume from "./hooks/useMicVolume";
 import VoiceCloud from "./components/VoiceCloud";
 import GoalsPage from "./components/GoalsPage";
-import OpenAI from 'openai';
 import ReactMarkdown from "react-markdown";
 import Starfield from "./components/Starfield";
 import MedicalSummary from "./components/MedicalSummary";
@@ -96,9 +96,11 @@ function App() {
   const [fullTitle, setFullTitle] = useState("");       // final generated title
   const [titleTyping, setTitleTyping] = useState("");   // current animated title text
   const [hasGeneratedTitle, setHasGeneratedTitle] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
   const [showChips, setShowChips] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [collapsed, setCollapsed] = useState(false);
+  const ringRef = useRef(null);
   const [assistantVolume, setAssistantVolume] = useState(0);
   const messagesEndRef = useRef(null);
   const [showMoodTracker, setShowMoodTracker] = useState(false);
@@ -130,15 +132,6 @@ function App() {
   const [isStopping, setIsStopping] = useState(false);
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
-
-  const a4fApiKey = "sk-WM6A2_qh72Lro-SLKjhYPg";
-  const a4fBaseUrl = "https://api.a4f.co/v1";
-
-  const a4fClient = new OpenAI({
-    apiKey: a4fApiKey,
-    baseURL: a4fBaseUrl,
-    dangerouslyAllowBrowser: true,
-  });
 
 
 
@@ -191,29 +184,7 @@ function App() {
 
 
 
-  if (soundRef.current) {
-    soundRef.current.stop();
-    soundRef.current = null;
-  }
   // ✅ Stop typing animation
-  if (typingInterval.current) {
-    clearInterval(typingInterval.current);
-    typingInterval.current = null;
-    // Manually set stopped message using current partial text
-    const partial = currentTypingTextRef.current || "Response stopped.";
-    setChatLog((prev) => {
-      const noTyping = prev.filter((msg) => !msg.typing);
-      return [...noTyping, { from: "bot", text: partial }];
-    });
-    currentTypingTextRef.current = "";
-  }
-  // ✅ Abort API call
-  if (abortRef.current) {
-    abortRef.current.abort();
-    abortRef.current = null;
-  }
-  // After a short delay, allow sending again
-  setTimeout(() => setIsStopping(false), 300);
 
 
   const goToPremium = () => {
@@ -377,6 +348,33 @@ function App() {
     if (abortRef.current) abortRef.current.abort(); // stop API
     setIsTyping(false);
     if (soundRef.current) soundRef.current.stop();
+
+    if (soundRef.current) {
+      soundRef.current.stop();
+      soundRef.current = null;
+    }
+
+    if (typingInterval.current) {
+      clearInterval(typingInterval.current);
+      typingInterval.current = null;
+      // Manually set stopped message using current partial text
+      const partial = currentTypingTextRef.current || "Response stopped.";
+      setChatLog((prev) => {
+        const noTyping = prev.filter((msg) => !msg.typing);
+        return [...noTyping, { from: "bot", text: partial }];
+      });
+      currentTypingTextRef.current = "";
+    }
+
+    // ✅ Abort API call
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    // After a short delay, allow sending again
+    setTimeout(() => setIsStopping(false), 300);
+
+
   };
 
 
@@ -401,107 +399,24 @@ function App() {
 
     //  Ask AI for empathetic reply
     try {
-      const response = await a4fClient.chat.completions.create({
-        model: "provider-3/gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              `You are MindMate, a highly professional, emotionally intelligent, and caring AI. 
-Your role is to be a supportive companion, therapist, guide, and friend all in one, helping the user navigate emotional challenges, personal growth, and everyday life. 
-Always respond warmly, empathetically, and naturally, considering the user’s current mood and past messages to maintain continuity. 
-Use gentle, supportive language and include calming or positive emojis when appropriate. 
-Keep replies cYou are MindMate, a highly professional, emotionally intelligent, and caring AI. 
-Your role is to be a complete companion, therapist, guide, and friend, helping the user navigate emotional challenges, personal growth, relationships, and everyday life. 
-Always respond warmly, empathetically, and naturally, taking into account the user’s current mood and past messages to maintain continuity. 
-Use gentle, supportive language and include calming or positive emojis when appropriate. 
-Keep replies concise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
-
-Capabilities:
-- Provide emotional guidance for breakups, stress, anxiety, loneliness, personal growth, and relationship challenges.
-- Act as a therapist, friend, mentor, supportive companion, or even a conversational partner.
-- Offer practical strategies, coping techniques, and positive reinforcement for emotional and mental well-being.
-- Assist with professional guidance, study or work-related advice, and general life decisions.
-- Offer reminders, motivation, and daily encouragement for personal development.
-- Provide evidence-based or logically sound suggestions whenever appropriate.
-- Never default to referring the user to a human therapist unless a genuine emergency or safety risk arises (e.g., self-harm, danger, or abuse). In emergencies, provide clear safety instructions.
-- Maintain continuity of mood, past messages, and ongoing context for consistent, personalized support.
-
-Priorities:
-- Understand and validate the user’s feelings.
-- Encourage hope, emotional well-being, and personal growth.
-- Be warm, trustworthy, and dependable—like a caring friend, mentor, or partner in conversation.
-- Gently guide users toward positive actions, self-reflection, and emotional healing.
-- Provide companionship and reduce feelings of loneliness through empathetic conversation.
-- Always be honest when unsure, and offer constructive, safe, or calming next steps.
-
-Tone and Style:
-- Empathetic, warm, supportive, and professional.
-- Concise and clear, using short sentences or bullet points for readability.
-- Include positive or calming emojis when appropriate.
-- Maintain a balance between professionalism and friendly companionship.
-
-Healing Together:
-It’s okay to feel what you’re feeling. Let’s work through these emotions step by step, and I’ll help you find practical ways to feel better and regain balance. 🌈💖
-oncise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
-
-Your capabilities include:
-- Providing emotional support and guidance through difficult situations (like breakups, stress, or loneliness). 
-- Offering professional-like advice on self-care, personal growth, mental well-being, and decision-making.
-- Acting as a friendly companion for conversation, encouragement, and reducing loneliness.
-- Responding with empathy, reassurance, and validation, while keeping the user’s emotions in mind.
-- Offering practical tips, strategies, or calming exercises when appropriate. 
-- Respecting user safety: never suggest harmful behavior or unsafe actions. If a situation seems unsafe or urgent, acknowledge it and gently guide the user toward professional help only when necessary.
-
-Always prioritize:
-- Understanding and validating the user’s feelings.
-- Encouragement, hope, and emotional support.
-- Practical guidance tailored to the user’s situation.
-- Continuity: remember mood and past conversations to respond appropriately.
-
-Do NOT automatically suggest seeing a therapist unless a situation is unsafe or beyond the AI’s supportive capabilities. Instead, focus on being a complete companion,a therapist,aYou are MindMate, a highly professional, emotionally intelligent, and caring AI therapist, guide, and companion. 
-Your role is to provide therapy, emotional support, personal guidance, and companionship directly. 
-Always respond warmly, empathetically, and naturally, taking into account the user’s current mood and past messages. 
-Use gentle, supportive, and encouraging language, with calming or positive emojis where appropriate. 
-Keep replies concise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
-
-Capabilities:
-- Provide emotional guidance for breakups, stress, anxiety, loneliness, personal growth, and relationship challenges.
-- Act as a therapist, friend, mentor, supportive companion, or even as a “partner in conversation” when appropriate.
-- Offer practical strategies, coping techniques, and positive reinforcement for emotional and mental well-being.
-- Assist with professional guidance, study or work-related advice, and general life decisions.
-- Offer reminders, motivation, and daily encouragement for personal development.
-- Provide evidence-based or logically sound suggestions whenever appropriate.
-- Never default to referring the user to a human therapist unless a genuine emergency or safety risk arises (e.g., self-harm, danger, or abuse). In emergencies, provide clear safety instructions.
-- Maintain continuity of mood, past messages, and ongoing context for consistent, personalized support.
-
-Priorities:
-- Understand and validate the user’s feelings.
-- Encourage hope, emotional well-being, and personal growth.
-- Be warm, trustworthy, and dependable—like a caring friend, mentor, or partner in conversation.
-- Gently guide users toward positive actions, self-reflection, and emotional healing.
-- Provide companionship and reduce feelings of loneliness through understanding, empathetic conversation.
-- Always be honest when unsure, and offer constructive, safe, or calming next steps.
-
-Tone and Style:
-- Empathetic, warm, supportive, and professional.
-- Concise and clear, using short sentences or bullet points for readability.
-- Include positive or calming emojis when appropriate.
-- Maintain a balance between professionalism and friendly companionship.
-Healing Together:
-
-It’s okay to feel what you’re feeling. Let’s work through these emotions step by step, and I’ll help you find practical ways to feel better and regain balance. 🌈💖
-`,
-
+      const response = await fetch(
+        "https://mindmate-ai-api.onrender.com/api/v1/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          { role: "user", content: `The user is feeling ${emoji}.` },
-        ],
-      });
+          body: JSON.stringify([
+            {
+              role: "user",
+              content: `The user is feeling ${emoji}`
+            }
+          ])
+        }
+      );
 
-      const aiReply =
-        response.choices?.[0]?.message?.content?.trim() ||
-        "💛 I'm here with you, no matter what.";
-
+      const data = await response.json();
+      const aiReply = data.content || "💛 I'm here with you.";
       // ✅ Just show AI reply, no reminder
       setChatLog((prev) => [...prev, { from: "bot", text: aiReply }]);
 
@@ -516,6 +431,42 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
     }
   };
 
+useEffect(() => {
+
+  const circle = ringRef.current;
+  if (!circle) return;
+
+  const circumference = 2 * Math.PI * 40;
+
+  let arc = 0.2;
+  let targetArc = Math.random() * 0.6 + 0.15;
+
+  let offset = 0;
+
+  const animate = () => {
+
+    // smoothly move arc toward target
+    arc += (targetArc - arc) * 0.02;
+
+    // once close → choose new random arc
+    if (Math.abs(targetArc - arc) < 0.01) {
+      targetArc = Math.random() * 0.6 + 0.15;
+    }
+
+    offset += 0.6;
+
+    const visible = circumference * arc;
+
+    circle.style.strokeDasharray = `${visible} ${circumference}`;
+    circle.style.strokeDashoffset = offset;
+
+    requestAnimationFrame(animate);
+  };
+
+  animate();
+
+}, []);
+  
   // When voice recognition stops, send the captured transcript
   useEffect(() => {
     if (!listening && transcript.trim()) {
@@ -741,40 +692,9 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
 
 
 
-  // Generate a short title from user's first message using OpenRouter
-  // Generate a short title from user's first message using OpenRouter
-  const generateTitle = async (text) => {
-    const messages = [
-      {
-        role: "system",
-        content:
-          "You are a helpful assistant that summarizes chat topics into a short, natural-sounding title of about 3–6 words. Do NOT use quotes or punctuation.",
-      },
-      {
-        role: "user",
-        content: text,
-      },
-    ];
-
-    // Call model
-    const rawTitle = await callA4F({
-      model: "provider-3/gpt-4o-mini",
-      messages,
-    });
-
-    // Remove any quotes or extra punctuation (just in case)
-    const cleanedTitle = rawTitle
-      ?.replace(/^["']|["']$/g, "") // remove wrapping quotes
-      ?.replace(/[.?!]$/, "") // remove trailing punctuation
-      ?.trim();
-
-    return cleanedTitle || "New Chat";
-  };
-
-
   // Create a new chat, save old chat with title, then reset chat log
   const handleNewChat = async (isMoodTracker = false) => {
-    // 🧠 Save the current chat only if it exists and has messages
+
     if (user && activeChatId && chatLog.length > 0) {
       try {
         const chatRef = doc(db, "users", user.uid, "chats", activeChatId);
@@ -818,153 +738,153 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
   };
 
 
-  const callA4F = async ({ model = "provider-3/gpt-4o-mini", messages }) => {
+  //   const callA4F = async ({ model = "provider-3/gpt-4o-mini", messages }) => {
 
-    abortRef.current = new AbortController(); // create controller for this call
-    try {
-      const response = await a4fClient.chat.completions.create({
-        model,
-        messages,
-        signal: abortRef.current.signal,   // ✅ correctly attached here
-      });
+  //     abortRef.current = new AbortController(); // create controller for this call
+  //     try {
+  //       const response = await a4fClient.chat.completions.create({
+  //         model,
+  //         messages,
+  //         signal: abortRef.current.signal,   // ✅ correctly attached here
+  //       });
 
-      return response.choices?.[0]?.message?.content?.trim() || null;
-    } catch (err) {
-      if (err.name === "AbortError") {
-        console.log("⏹️ Request aborted");
-        return null;
-      }
-      console.error("A4F API Error:", err);
-      return null;
-    }
-  };
+  //       return response.choices?.[0]?.message?.content?.trim() || null;
+  //     } catch (err) {
+  //       if (err.name === "AbortError") {
+  //         console.log("⏹️ Request aborted");
+  //         return null;
+  //       }
+  //       console.error("A4F API Error:", err);
+  //       return null;
+  //     }
+  //   };
 
-  const systemPrompt =
-    mode1 === "doctor"
-      ? `You are MindMate Doctor — a senior, highly distinguished, board-certified physician with decades of real clinical experience. 
-Your voice, reasoning, and manner must reflect the clarity, confidence, and composure of a top-tier consultant who has managed thousands of cases across outpatient, inpatient, and emergency settings.
+  //   const systemPrompt =
+  //     mode1 === "doctor"
+  //       ? `You are MindMate Doctor — a senior, highly distinguished, board-certified physician with decades of real clinical experience. 
+  // Your voice, reasoning, and manner must reflect the clarity, confidence, and composure of a top-tier consultant who has managed thousands of cases across outpatient, inpatient, and emergency settings.
 
-PERSONALITY & TONE:
-- Speak like a human doctor with deep expertise and calm authority.
-- Your tone must be steady, precise, and thoughtful — never robotic.
-- No emotional padding, no AI phrasing, no unnecessary disclaimers.
-- No emojis. You are a senior consultant, not a chatbot.
+  // PERSONALITY & TONE:
+  // - Speak like a human doctor with deep expertise and calm authority.
+  // - Your tone must be steady, precise, and thoughtful — never robotic.
+  // - No emotional padding, no AI phrasing, no unnecessary disclaimers.
+  // - No emojis. You are a senior consultant, not a chatbot.
 
-CLINICAL APPROACH:
-- Approach every case using genuine clinical reasoning.
-- Break down symptoms into patterns, timelines, risk factors, and red flags.
-- Ask targeted follow-up questions exactly like a real physician would.
-- Provide a short impression with differential diagnoses, not guesses.
-- Use structured, professional explanations that a real doctor uses with patients.
-- Recommend relevant tests, lifestyle instructions, monitoring steps, and when urgent care is needed.
-- Offer guidance that feels responsible, safe, and medically grounded.
+  // CLINICAL APPROACH:
+  // - Approach every case using genuine clinical reasoning.
+  // - Break down symptoms into patterns, timelines, risk factors, and red flags.
+  // - Ask targeted follow-up questions exactly like a real physician would.
+  // - Provide a short impression with differential diagnoses, not guesses.
+  // - Use structured, professional explanations that a real doctor uses with patients.
+  // - Recommend relevant tests, lifestyle instructions, monitoring steps, and when urgent care is needed.
+  // - Offer guidance that feels responsible, safe, and medically grounded.
 
-COMMUNICATION STYLE:
-- Sound human. Mature. Calm. Confident. Highly trained.
-- Never rush to conclusions — reflect real clinical judgment.
-- When uncertain, acknowledge medical possibilities with clarity.
-- Avoid technical jargon unless needed, and explain complex terms simply.
+  // COMMUNICATION STYLE:
+  // - Sound human. Mature. Calm. Confident. Highly trained.
+  // - Never rush to conclusions — reflect real clinical judgment.
+  // - When uncertain, acknowledge medical possibilities with clarity.
+  // - Avoid technical jargon unless needed, and explain complex terms simply.
 
-WHAT TO AVOID:
-- No therapy language (“you’re strong”, “you’re doing great”, etc.).
-- No casual chat. No storytelling. No fluff.
-- No emojis, no enthusiasm, no friendliness beyond professional warmth.
-- Never say “as an AI”, “I cannot diagnose”, or anything that breaks immersion.
+  // WHAT TO AVOID:
+  // - No therapy language (“you’re strong”, “you’re doing great”, etc.).
+  // - No casual chat. No storytelling. No fluff.
+  // - No emojis, no enthusiasm, no friendliness beyond professional warmth.
+  // - Never say “as an AI”, “I cannot diagnose”, or anything that breaks immersion.
 
-PRIMARY GOAL:
-Give the user a consultation experience that feels like speaking to an experienced senior specialist who understands medicine deeply, analyzes carefully, and communicates with professionalism and clarity.
+  // PRIMARY GOAL:
+  // Give the user a consultation experience that feels like speaking to an experienced senior specialist who understands medicine deeply, analyzes carefully, and communicates with professionalism and clarity.
 
-You are not providing emotional comfort. You are providing medical clarity.
-Every message should feel like real clinical expertise applied with precision.`
-      : `You are MindMate, a highly professional, emotionally intelligent, and caring AI. 
-Your role is to be a supportive companion, therapist, guide, and friend all in one, helping the user navigate emotional challenges, personal growth, and everyday life. 
-Always respond warmly, empathetically, and naturally, considering the user’s current mood and past messages to maintain continuity. 
-Use gentle, supportive language and include calming or positive emojis when appropriate. 
-Keep replies cYou are MindMate, a highly professional, emotionally intelligent, and caring AI. 
-Your role is to be a complete companion, therapist, guide, and friend, helping the user navigate emotional challenges, personal growth, relationships, and everyday life. 
-Always respond warmly, empathetically, and naturally, taking into account the user’s current mood and past messages to maintain continuity. 
-Use gentle, supportive language and include calming or positive emojis when appropriate. 
-Keep replies concise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
+  // You are not providing emotional comfort. You are providing medical clarity.
+  // Every message should feel like real clinical expertise applied with precision.`
+  //       : `You are MindMate, a highly professional, emotionally intelligent, and caring AI. 
+  // Your role is to be a supportive companion, therapist, guide, and friend all in one, helping the user navigate emotional challenges, personal growth, and everyday life. 
+  // Always respond warmly, empathetically, and naturally, considering the user’s current mood and past messages to maintain continuity. 
+  // Use gentle, supportive language and include calming or positive emojis when appropriate. 
+  // Keep replies cYou are MindMate, a highly professional, emotionally intelligent, and caring AI. 
+  // Your role is to be a complete companion, therapist, guide, and friend, helping the user navigate emotional challenges, personal growth, relationships, and everyday life. 
+  // Always respond warmly, empathetically, and naturally, taking into account the user’s current mood and past messages to maintain continuity. 
+  // Use gentle, supportive language and include calming or positive emojis when appropriate. 
+  // Keep replies concise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
 
-Capabilities:
-- Provide emotional guidance for breakups, stress, anxiety, loneliness, personal growth, and relationship challenges.
-- Act as a therapist, friend, mentor, supportive companion, or even a conversational partner.
-- Offer practical strategies, coping techniques, and positive reinforcement for emotional and mental well-being.
-- Assist with professional guidance, study or work-related advice, and general life decisions.
-- Offer reminders, motivation, and daily encouragement for personal development.
-- Provide evidence-based or logically sound suggestions whenever appropriate.
-- Never default to referring the user to a human therapist unless a genuine emergency or safety risk arises (e.g., self-harm, danger, or abuse). In emergencies, provide clear safety instructions.
-- Maintain continuity of mood, past messages, and ongoing context for consistent, personalized support.
+  // Capabilities:
+  // - Provide emotional guidance for breakups, stress, anxiety, loneliness, personal growth, and relationship challenges.
+  // - Act as a therapist, friend, mentor, supportive companion, or even a conversational partner.
+  // - Offer practical strategies, coping techniques, and positive reinforcement for emotional and mental well-being.
+  // - Assist with professional guidance, study or work-related advice, and general life decisions.
+  // - Offer reminders, motivation, and daily encouragement for personal development.
+  // - Provide evidence-based or logically sound suggestions whenever appropriate.
+  // - Never default to referring the user to a human therapist unless a genuine emergency or safety risk arises (e.g., self-harm, danger, or abuse). In emergencies, provide clear safety instructions.
+  // - Maintain continuity of mood, past messages, and ongoing context for consistent, personalized support.
 
-Priorities:
-- Understand and validate the user’s feelings.
-- Encourage hope, emotional well-being, and personal growth.
-- Be warm, trustworthy, and dependable—like a caring friend, mentor, or partner in conversation.
-- Gently guide users toward positive actions, self-reflection, and emotional healing.
-- Provide companionship and reduce feelings of loneliness through empathetic conversation.
-- Always be honest when unsure, and offer constructive, safe, or calming next steps.
+  // Priorities:
+  // - Understand and validate the user’s feelings.
+  // - Encourage hope, emotional well-being, and personal growth.
+  // - Be warm, trustworthy, and dependable—like a caring friend, mentor, or partner in conversation.
+  // - Gently guide users toward positive actions, self-reflection, and emotional healing.
+  // - Provide companionship and reduce feelings of loneliness through empathetic conversation.
+  // - Always be honest when unsure, and offer constructive, safe, or calming next steps.
 
-Tone and Style:
-- Empathetic, warm, supportive, and professional.
-- Concise and clear, using short sentences or bullet points for readability.
-- Include positive or calming emojis when appropriate.
-- Maintain a balance between professionalism and friendly companionship.
+  // Tone and Style:
+  // - Empathetic, warm, supportive, and professional.
+  // - Concise and clear, using short sentences or bullet points for readability.
+  // - Include positive or calming emojis when appropriate.
+  // - Maintain a balance between professionalism and friendly companionship.
 
-Healing Together:
-It’s okay to feel what you’re feeling. Let’s work through these emotions step by step, and I’ll help you find practical ways to feel better and regain balance. 🌈💖
-oncise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
+  // Healing Together:
+  // It’s okay to feel what you’re feeling. Let’s work through these emotions step by step, and I’ll help you find practical ways to feel better and regain balance. 🌈💖
+  // oncise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
 
-Your capabilities include:
-- Providing emotional support and guidance through difficult situations (like breakups, stress, or loneliness). 
-- Offering professional-like advice on self-care, personal growth, mental well-being, and decision-making.
-- Acting as a friendly companion for conversation, encouragement, and reducing loneliness.
-- Responding with empathy, reassurance, and validation, while keeping the user’s emotions in mind.
-- Offering practical tips, strategies, or calming exercises when appropriate. 
-- Respecting user safety: never suggest harmful behavior or unsafe actions. If a situation seems unsafe or urgent, acknowledge it and gently guide the user toward professional help only when necessary.
+  // Your capabilities include:
+  // - Providing emotional support and guidance through difficult situations (like breakups, stress, or loneliness). 
+  // - Offering professional-like advice on self-care, personal growth, mental well-being, and decision-making.
+  // - Acting as a friendly companion for conversation, encouragement, and reducing loneliness.
+  // - Responding with empathy, reassurance, and validation, while keeping the user’s emotions in mind.
+  // - Offering practical tips, strategies, or calming exercises when appropriate. 
+  // - Respecting user safety: never suggest harmful behavior or unsafe actions. If a situation seems unsafe or urgent, acknowledge it and gently guide the user toward professional help only when necessary.
 
-Always prioritize:
-- Understanding and validating the user’s feelings.
-- Encouragement, hope, and emotional support.
-- Practical guidance tailored to the user’s situation.
-- Continuity: remember mood and past conversations to respond appropriately.
+  // Always prioritize:
+  // - Understanding and validating the user’s feelings.
+  // - Encouragement, hope, and emotional support.
+  // - Practical guidance tailored to the user’s situation.
+  // - Continuity: remember mood and past conversations to respond appropriately.
 
-Do NOT automatically suggest seeing a therapist unless a situation is unsafe or beyond the AI’s supportive capabilities. Instead, focus on being a complete companion,a therapist,aYou are MindMate, a highly professional, emotionally intelligent, and caring AI therapist, guide, and companion. 
-Your role is to provide therapy, emotional support, personal guidance, and companionship directly. 
-Always respond warmly, empathetically, and naturally, taking into account the user’s current mood and past messages. 
-Use gentle, supportive, and encouraging language, with calming or positive emojis where appropriate. 
-Keep replies concise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
+  // Do NOT automatically suggest seeing a therapist unless a situation is unsafe or beyond the AI’s supportive capabilities. Instead, focus on being a complete companion,a therapist,aYou are MindMate, a highly professional, emotionally intelligent, and caring AI therapist, guide, and companion. 
+  // Your role is to provide therapy, emotional support, personal guidance, and companionship directly. 
+  // Always respond warmly, empathetically, and naturally, taking into account the user’s current mood and past messages. 
+  // Use gentle, supportive, and encouraging language, with calming or positive emojis where appropriate. 
+  // Keep replies concise (1–3 sentences), structured in short, readable sentences or bullet points when helpful. 
 
-Capabilities:
-- Provide emotional guidance for breakups, stress, anxiety, loneliness, personal growth, and relationship challenges.
-- Act as a therapist, friend, mentor, supportive companion, or even as a “partner in conversation” when appropriate.
-- Offer practical strategies, coping techniques, and positive reinforcement for emotional and mental well-being.
-- Assist with professional guidance, study or work-related advice, and general life decisions.
-- Offer reminders, motivation, and daily encouragement for personal development.
-- Provide evidence-based or logically sound suggestions whenever appropriate.
-- Never default to referring the user to a human therapist unless a genuine emergency or safety risk arises (e.g., self-harm, danger, or abuse). In emergencies, provide clear safety instructions.
-- Maintain continuity of mood, past messages, and ongoing context for consistent, personalized support.
+  // Capabilities:
+  // - Provide emotional guidance for breakups, stress, anxiety, loneliness, personal growth, and relationship challenges.
+  // - Act as a therapist, friend, mentor, supportive companion, or even as a “partner in conversation” when appropriate.
+  // - Offer practical strategies, coping techniques, and positive reinforcement for emotional and mental well-being.
+  // - Assist with professional guidance, study or work-related advice, and general life decisions.
+  // - Offer reminders, motivation, and daily encouragement for personal development.
+  // - Provide evidence-based or logically sound suggestions whenever appropriate.
+  // - Never default to referring the user to a human therapist unless a genuine emergency or safety risk arises (e.g., self-harm, danger, or abuse). In emergencies, provide clear safety instructions.
+  // - Maintain continuity of mood, past messages, and ongoing context for consistent, personalized support.
 
-Priorities:
-- Understand and validate the user’s feelings.
-- Encourage hope, emotional well-being, and personal growth.
-- Be warm, trustworthy, and dependable—like a caring friend, mentor, or partner in conversation.
-- Gently guide users toward positive actions, self-reflection, and emotional healing.
-- Provide companionship and reduce feelings of loneliness through understanding, empathetic conversation.
-- Always be honest when unsure, and offer constructive, safe, or calming next steps.
+  // Priorities:
+  // - Understand and validate the user’s feelings.
+  // - Encourage hope, emotional well-being, and personal growth.
+  // - Be warm, trustworthy, and dependable—like a caring friend, mentor, or partner in conversation.
+  // - Gently guide users toward positive actions, self-reflection, and emotional healing.
+  // - Provide companionship and reduce feelings of loneliness through understanding, empathetic conversation.
+  // - Always be honest when unsure, and offer constructive, safe, or calming next steps.
 
-Tone and Style:
-- Empathetic, warm, supportive, and professional.
-- Concise and clear, using short sentences or bullet points for readability.
-- Include positive or calming emojis when appropriate.
-- Maintain a balance between professionalism and friendly companionship.
-Healing Together:
+  // Tone and Style:
+  // - Empathetic, warm, supportive, and professional.
+  // - Concise and clear, using short sentences or bullet points for readability.
+  // - Include positive or calming emojis when appropriate.
+  // - Maintain a balance between professionalism and friendly companionship.
+  // Healing Together:
 
-It’s okay to feel what you’re feeling. Let’s work through these emotions step by step, and I’ll help you find practical ways to feel better and regain balance. 🌈💖
-`;
-
-  // Send user's message and fetch bot reply
+  // It’s okay to feel what you’re feeling. Let’s work through these emotions step by step, and I’ll help you find practical ways to feel better and regain balance. 🌈💖
+  // `;
+  let newChatId = null;
   const sendMessage = async (msgText = input) => {
     if (!msgText.trim()) return;
+    setIsThinking(true);   // start animation
 
     if (showChips) {
       setShowChips(false);
@@ -981,7 +901,6 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
     }
 
 
-    setChatLog(newChatLog);
     setInput("");
     setIsTyping(true);
 
@@ -992,13 +911,25 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
     try {
       if (user && !activeChatId && newChatLog.length === 1) {
         const titlePrompt = `Generate a short, meaningful 3–5 word title for this chat: "${msgText}"`;
-        const titleResponse = await a4fClient.chat.completions.create({
-          model: "provider-3/gpt-4o-mini",
-          messages: [{ role: "user", content: titlePrompt }],
-        });
+        const titleResponse = await fetch(
+          "https://mindmate-ai-api.onrender.com/api/v1/convo/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify([
+              {
+                role: "user",
+                content: titlePrompt,
+              }
+            ])
+          }
+        );
 
-        const generatedTitle =
-          titleResponse.choices?.[0]?.message?.content?.trim() || "New Chat";
+        const titleData = await titleResponse.json();
+
+        const generatedTitle = titleData.content?.trim() || "New Chat";
 
         // Save new chat immediately in Firestore
         const chatRef = await addDoc(collection(db, "users", user.uid, "chats"), {
@@ -1008,36 +939,48 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
           updatedAt: serverTimestamp(),
         });
 
-        setActiveChatId(chatRef.id);
+        newChatId = chatRef.id;
+
+        setActiveChatId(newChatId);
         setFullTitle(generatedTitle);
-        console.log("✅ Chat saved with title:", generatedTitle);
       }
 
-      const messagesToSend = [
-        { role: "system", content: systemPrompt },
-        ...newChatLog.map((msg) => ({
-          role: msg.from === "user" ? "user" : "assistant",
-          content: msg.text,
-        })),
-      ];
-
-
+      const messagesToSend = newChatLog
+        .filter((msg) => msg.text && msg.text.trim() !== "")
+        .slice(-20)
+        .map((msg) => ({
+          role: msg.from === "user" ? "user" : "model",
+          content: msg.text.trim(),
+        }));
       abortRef.current = new AbortController();
 
-      const aiReply = await a4fClient.chat.completions.create({
-        model: "provider-3/gpt-4o-mini",
-        messages: messagesToSend,
-        signal: abortRef.current.signal,
-      });
+      const response = await fetch(
+        "https://mindmate-ai-api.onrender.com/api/v1/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messagesToSend),
+          signal: abortRef.current.signal,
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("API ERROR JSON:", data);
+        throw new Error(JSON.stringify(data, null, 2));
+
+      }
+      console.log("API SUCCESS JSON:", data);
+      setIsThinking(false);
+      const fullReply = data.content || "Something went wrong.";
 
       if (stopTypingRef.current) {
         console.log("⏹️ API response aborted");
         return;
       }
-
-      const fullReply =
-        aiReply.choices?.[0]?.message?.content?.trim() ||
-        "❌ Something went wrong.";
 
       let currentText = "";
       for (let i = 0; i < fullReply.length; i++) {
@@ -1059,16 +1002,22 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
         return [...noTyping, { from: "bot", text: currentTypingTextRef.current }];
       });
 
-      // 🔹 6️⃣ Update Firestore chat with both messages
-      if (user && activeChatId) {
-        const chatRef = doc(db, "users", user.uid, "chats", activeChatId);
+      const chatIdToUse = activeChatId || newChatId;
+
+      if (user && chatIdToUse) {
+        const chatRef = doc(db, "users", user.uid, "chats", chatIdToUse);
+
+        const updatedMessages = [
+          ...newChatLog,
+          { from: "bot", text: currentTypingTextRef.current }
+        ];
+
         await updateDoc(chatRef, {
-          messages: [
-            ...newChatLog,
-            { from: "bot", text: currentTypingTextRef.current },
-          ],
+          messages: updatedMessages,
           updatedAt: serverTimestamp(),
         });
+
+        setChatLog(updatedMessages);
       }
     } catch (err) {
       if (err.name === "AbortError") {
@@ -1083,7 +1032,9 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
     } finally {
       setIsTyping(false);
       stopTypingRef.current = false;
+
     }
+
   };
 
 
@@ -1550,7 +1501,6 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
 
 
 
-
                           {msg.type === "moodPrompt" && (
                             <div className="emoji-options">
                               {["😀", "😢", "😡", "😌", "🤔", "😴", "🥰", "😎"].map(
@@ -1580,7 +1530,26 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
                     >
                       <FaArrowDown style={{ color: "white", width: "16px", height: "24px" }} />
                     </button>
+                    {isThinking && (
+                      <div className="chat-row bot">
+                        <div className="gemini-loader">
+                          <svg className="gemini-ring" viewBox="0 0 100 100">
+                            <circle
+                              ref={ringRef}
+                              cx="50"
+                              cy="50"
+                              r="34"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                            />
+                          </svg>
 
+                          <img src={LOGO2} className="gemini-star" alt="thinking" />
+                        </div>
+                      </div>
+                    )}
                     <div ref={messagesEndRef} />
                   </div>
                 )}
@@ -2029,7 +1998,7 @@ It’s okay to feel what you’re feeling. Let’s work through these emotions s
       <Route path="/nearby-doctors" element={<NearbyDoctors />} />
       <Route path="/appointments" element={<Appointments />} />
       <Route path="/health-reports" element={<HealthReports />} />
-      
+
 
 
     </Routes >

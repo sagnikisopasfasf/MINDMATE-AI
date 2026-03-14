@@ -13,7 +13,7 @@ import {
 import LOGO2 from "../assets/LOGO2.svg";
 import "../styles/App.css";
 import { useNavigate } from "react-router-dom";
-import SearchChatsModal from "./SearchChatsModal";
+
 export default function Sidebar({
   chatTitles = [],
   onNewChat,
@@ -94,32 +94,40 @@ export default function Sidebar({
           }`}
       >
         {/* Logo */}
-        <div className="logo-wrapper" onClick={onToggleCollapse}>
-          <img
-            src={LOGO2}
-            alt="MindMate Logo"
-            className={`logo-i ${collapsed ? "collapsed" : ""}`}
-          />
+        <div className="logo-wrapper">
 
-          {collapsed && (
-            <div className="expand-arrow">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-                stroke="currentColor"
-                className="arrow-icon"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-          )}
-        </div>
+  <img
+    src={LOGO2}
+    alt="MindMate Logo"
+    className="logo-i"
+  />
+
+  <button
+    className="collapse-btn"
+    onClick={onToggleCollapse}
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24">
+      {collapsed ? (
+        <path
+          d="M9 18l6-6-6-6"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <path
+          d="M15 18l-6-6 6-6"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  </button>
+
+</div>
 
         {/* ---------- MIDDLE SECTION ---------- */}
         <div className={`sidebar-middle ${anim}`}>

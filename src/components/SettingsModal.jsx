@@ -5,6 +5,7 @@ import { auth, db } from "../firebase";
 import {
   getDoc,
   updateDoc,
+  setDoc,
   doc,
   deleteDoc
 } from "firebase/firestore";
@@ -16,6 +17,8 @@ import {
   reauthenticateWithCredential,
   reauthenticateWithPopup
 } from "firebase/auth";
+
+
 
 const sections = [
   { id: "general", label: "General" },
@@ -62,9 +65,16 @@ export default function SettingsModal({ isOpen, onClose }) {
   useEffect(() => {
     const saveTheme = async () => {
       const user = auth.currentUser;
+
       if (user) {
         const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, { theme });
+
+        await setDoc(
+          userRef,
+          { theme },
+          { merge: true }   // creates doc if missing
+        );
+
       } else {
         localStorage.setItem("theme", theme);
       }

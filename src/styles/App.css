@@ -543,19 +543,16 @@ textarea {
 
 .chatgpt-wrapper {
   display: flex;
-  flex-direction: row;
-  width: 100vw;
-  height: 100dvh;
-  overflow: hidden;
-  position: relative;
+  width: 100%;
+  height: 100vh;
 }
 
 .sidebar-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: auto; /* remove fixed width */
+   position: relative;
+  height: 100%;
+  display: flex;
+  width: auto;
+  /* remove fixed width */
   z-index: 1000;
 
   transition: transform 0.28s ease;
@@ -564,7 +561,6 @@ textarea {
   background: transparent;
   pointer-events: none;
 }
-
 
 
 .sidebar {
@@ -579,7 +575,7 @@ textarea {
   flex-direction: column;
   /* border + shadow live on the sidebar itself */
   border-right: 1px solid rgba(200, 160, 255, 0.08);
-  box-shadow: 4px 0 18px rgba(180, 120, 255, 0.06);
+  box-shadow: 4px 0 18px rgba(104, 3, 227, 0.06);
   background-color: var(--bg-color);
   color: var(--text-color);
   padding: 16px;
@@ -919,22 +915,7 @@ textarea {
 
 
 
-.sidebar {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  box-sizing: border-box;
-}
 
-.sidebar {
-
-  border-right: 1px solid rgba(200, 160, 255, 0.3);
-  box-shadow: 4px 0 20px rgba(180, 120, 255, 0.2);
-
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
 
 .sidebar.hidden {
   transform: translateX(-100%);
@@ -1302,42 +1283,30 @@ body[data-theme="aurora"] {
 
 .main-area {
   position: relative;
-  margin-left: 260px;
   flex: 1;
-  width: calc(100vw - 260px);
-  height: calc(var(--vh, 1vh) * 100);
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
   display: flex;
   flex-direction: column;
   overflow: hidden;
   transition: margin-left 0.3s ease;
 }
 
-/* When sidebar is visible, push content */
-.sidebar-container.visible~.main-area {
-  margin-left: 260px;
-  /* shift only if sidebar is open */
-}
 
-/* ✅ Chat Body */
+
 .chat-body {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* ✅ important for flex scroll */
-  overflow: hidden;
+  overflow-y: auto;   /* change this */
   align-items: center;
-  /* ✅ centers the chat-log horizontally */
 }
 
-/* Chat container */
-.chat-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
 
 .chat-log {
   flex: 1;
@@ -1353,7 +1322,7 @@ body[data-theme="aurora"] {
   width: 100%;
   ;
   margin: 0 auto;
-  /* ✅ take full width */
+
 }
 
 
@@ -1481,6 +1450,8 @@ body[data-theme="aurora"] {
   bottom: 16px;
   left: 0;
   right: 0;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   justify-content: center;
   z-index: 999;
@@ -1559,14 +1530,13 @@ body[data-theme="aurora"] {
 .floating-input-bar.welcome-mode {
   position: absolute;
   top: calc(50% + 60px);
+
   left: 50%;
-  transform: translateX(-60%);
+  transform: translate(-50%, 0);
 
   width: 100%;
-  display: flex;
-  justify-content: center;
+  max-width: 700px;
 }
-
 /* Chat mode: fixed at bottom like ChatGPT */
 .floating-input-bar.chat-mode {
   position: fixed;
@@ -2255,25 +2225,26 @@ button {
   }
 }
 
-
 .welcome-container {
   position: absolute;
   top: 50%;
-  left: 40%;
-  transform: translate(-50%, -60%);
+  left: 50%;
+  transform: translate(-50%, -55%);
 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
 
+  gap: 22px;
   text-align: center;
+
   width: 100%;
   max-width: 700px;
 
   pointer-events: none;
 }
+
 
 .welcome-text {
   font-size: 24px;
@@ -2288,6 +2259,17 @@ button {
   padding: 0 10px;
   color: #fff;
   text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  animation: softGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes softGlow {
+  from {
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+  }
+
+  to {
+    text-shadow: 0 0 14px rgba(255, 255, 255, 0.7);
+  }
 }
 
 /* keep emojis default look */
@@ -2611,15 +2593,15 @@ button {
 
 .scroll-to-bottom-btn {
   position: absolute;
-  bottom: 90px;
-  left: 42%;
-  transform: translateX(-50%) translateY(20px);
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 110px;
   /* start slightly lower */
   z-index: 100;
-  width: 52px;
-  height: 52px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgb(0, 0, 0);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3263,3 +3245,76 @@ button {
   }
 }
 
+.gemini-loader {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gemini-ring {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+}
+
+.gemini-star {
+  width: 14px;
+  height: 14px;
+  z-index: 2;
+  animation: logoBreath 2.4s ease-in-out infinite;
+}
+
+@keyframes logoBreath {
+
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+
+}
+
+
+
+/* collapse button */
+.collapse-btn{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  opacity:0;
+  transition:opacity .2s ease;
+  outline: none;
+}
+
+/* show arrow when sidebar expanded */
+.sidebar.expanded .collapse-btn{
+  opacity:1;
+  outline: none;
+}
+
+/* ChatGPT behavior when collapsed */
+.sidebar.collapsed .logo-wrapper:hover .collapse-btn{
+  opacity:1;
+  outline: none;
+}
+
+.sidebar.collapsed .logo-wrapper:hover .logo-i{
+  opacity:0.25;
+  outline: none;
+}
