@@ -6,7 +6,10 @@ import CloudyOrb from "./CloudyOrb";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 const VoiceCloud = () => {
   const navigate = useNavigate();
-  const { transcript, resetTranscript, listening, browserSupportsSpeechRecognition } = useSpeechRecognition();
+  const { transcript, resetTranscript, listening, browserSupportsSpeechRecognition } =
+    useSpeechRecognition({
+      clearTranscriptOnListen: true
+    });
   const [volume, setVolume] = useState(0);
   const [assistantVolume, setAssistantVolume] = useState(0);
   const [error, setError] = useState(null);
@@ -124,6 +127,22 @@ const VoiceCloud = () => {
       console.error("Voice AI error:", err);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognitionAPI =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      console.warn("Speech recognition not supported in this browser.");
+      return;
+    }
+
+    // Force library to use browser engine
+    SpeechRecognition.applyPolyfill(SpeechRecognitionAPI);
+
+  }, []);
 
   useEffect(() => {
 

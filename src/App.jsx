@@ -132,7 +132,23 @@ function App() {
   const [isStopping, setIsStopping] = useState(false);
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
-  const { transcript, resetTranscript, listening } = useSpeechRecognition();
+  const { transcript, resetTranscript, listening } = useSpeechRecognition({
+    clearTranscriptOnListen: true
+  });
+  useEffect(() => {
+    if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
+      console.warn("Browser does not support speech recognition.");
+    }
+
+    if (typeof window !== "undefined") {
+      const SR =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (SR) {
+        SpeechRecognition.applyPolyfill(SR);
+      }
+    }
+  }, []);
   const browserSupportsSpeechRecognition = SpeechRecognition.browserSupportsSpeechRecognition();
   if (!browserSupportsSpeechRecognition) {
     console.log("Speech recognition not supported");
