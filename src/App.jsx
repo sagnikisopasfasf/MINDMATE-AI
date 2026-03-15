@@ -133,10 +133,33 @@ function App() {
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
   const { transcript, resetTranscript, listening } = useSpeechRecognition();
-  const browserSupportsSpeechRecognition =SpeechRecognition.browserSupportsSpeechRecognition();
-  if (!browserSupportsSpeechRecognition) {
-    console.log("Speech recognition not supported");
-  }
+
+  const startVoice = async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      SpeechRecognition.startListening({
+        continuous: true,
+        interimResults: true,
+        language: "en-US",
+      });
+    } catch (err) {
+      console.error("Mic start error:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
+      console.log("Speech recognition not supported");
+    }
+  }, []);
+
+  useEffect(() => {
+    navigator.mediaDevices
+      ?.getUserMedia({ audio: true })
+      .catch((err) => console.log("Mic permission denied:", err));
+  }, []);
+
   const currentVolume = useMicVolume(listening);
 
   const [selectedVoice, setSelectedVoice] = useState({
@@ -1648,12 +1671,7 @@ function App() {
                             SpeechRecognition.stopListening();
                           } else {
                             resetTranscript();
-
-                            SpeechRecognition.startListening({
-                              continuous: false,
-                              interimResults: true,
-                              language: "en-US"
-                            });
+                            startVoice();
                           }
                         }}
                         title="Voice Input"
