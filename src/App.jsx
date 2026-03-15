@@ -531,6 +531,32 @@ function App() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const SpeechRecognitionAPI =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      console.warn("Speech recognition not supported in this browser");
+      return;
+    }
+
+    // Initialize the engine once for production builds
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    window.__SR__ = recognition;
+  }, []);
+
+  useEffect(() => {
+    if (transcript) {
+      setInput(transcript);
+    }
+  }, [transcript]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SR) {
@@ -1657,21 +1683,25 @@ function App() {
                             SpeechRecognition.stopListening();
                           } else {
                             resetTranscript();
-                            if (typeof window !== "undefined") {
-                              const SpeechRecognitionAPI =
-                                window.SpeechRecognition || window.webkitSpeechRecognition;
 
-                              if (!SpeechRecognitionAPI) {
-                                console.log("Speech recognition not supported");
-                                return;
-                              }
+                            const SR =
+                              window.SpeechRecognition || window.webkitSpeechRecognition;
 
+                            if (!SR) {
+                              console.log("Speech recognition not supported");
+                              return;
+                            }
+
+                            // restart cleanly (fixes production issue)
+                            SpeechRecognition.stopListening();
+
+                            setTimeout(() => {
                               SpeechRecognition.startListening({
                                 continuous: true,
                                 interimResults: true,
-                                language: "en-US"
+                                language: "en-US",
                               });
-                            }
+                            }, 150);
                           }
                         }}
                         title="Voice Input"
