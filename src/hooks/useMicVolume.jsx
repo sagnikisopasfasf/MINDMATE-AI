@@ -20,6 +20,8 @@ export default function useMicVolume(listening) {
 
     const start = async () => {
       try {
+
+        // ✅ ask permission first
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -32,7 +34,16 @@ export default function useMicVolume(listening) {
 
         streamRef.current = stream;
 
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioCtx =
+          window.AudioContext || window.webkitAudioContext;
+
+        const ctx = new AudioCtx();
+
+        // ✅ fix for suspended context on deployed sites
+        if (ctx.state === "suspended") {
+          await ctx.resume();
+        }
+
         audioContextRef.current = ctx;
 
         const analyser = ctx.createAnalyser();
@@ -46,6 +57,8 @@ export default function useMicVolume(listening) {
         const dataArray = new Uint8Array(analyser.fftSize);
 
         const tick = () => {
+          if (!analyserRef.current) return;
+
           analyser.getByteTimeDomainData(dataArray);
 
           let sum = 0;
@@ -56,10 +69,8 @@ export default function useMicVolume(listening) {
 
           let avg = sum / dataArray.length / 128;
 
-          // amplify mic response
           avg = Math.min(avg * 3, 1);
 
-          // smooth animation
           smoothRef.current =
             smoothRef.current * 0.8 + avg * 0.2;
 
