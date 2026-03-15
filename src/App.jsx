@@ -1667,7 +1667,7 @@ function App() {
                               }
 
                               SpeechRecognition.startListening({
-                                continuous: false,
+                                continuous: true,
                                 interimResults: true,
                                 language: "en-US"
                               });
