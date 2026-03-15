@@ -133,7 +133,10 @@ function App() {
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
   const { transcript, resetTranscript, listening } = useSpeechRecognition();
-
+  const browserSupportsSpeechRecognition =SpeechRecognition.browserSupportsSpeechRecognition();
+  if (!browserSupportsSpeechRecognition) {
+    console.log("Speech recognition not supported");
+  }
   const currentVolume = useMicVolume(listening);
 
   const [selectedVoice, setSelectedVoice] = useState({
@@ -191,20 +194,6 @@ function App() {
   const goToPremium = () => {
     navigate("/premium"); // Redirect to Premium page
   };
-
-  // Add state
-  const [showListeningModal, setShowListeningModal] = useState(false);
-
-  // When user clicks mic button
-  const handleStartListening = () => {
-    setShowListeningModal(true);
-    setPreviewListening(true);
-    resetTranscript();
-    SpeechRecognition.startListening({ continuous: true });
-  };
-
-
-
 
   const handleOpenJournaling = () => {
     // Clear current chat & hide everything else
@@ -1043,20 +1032,7 @@ function App() {
     }
   };
 
-  // Handle image upload and add placeholder message with image preview
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setChatLog((prev) => [...prev, { from: "user", text: "[Image attached]", image: imageUrl }]);
-    }
-  };
 
-  // Start voice recognition
-  const startListening = () => {
-    resetTranscript();
-    SpeechRecognition.startListening({ continuous: false });
-  };
 
   const handleDeleteChat = async (chatId) => {
     if (chatId === activeChatId && !user) {
