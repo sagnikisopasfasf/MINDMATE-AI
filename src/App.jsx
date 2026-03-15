@@ -13,7 +13,7 @@ import {
   ThumbsDown,
   Share2,
   RefreshCcw,
-  MoreHorizontal,
+  Volume2,
 } from "lucide-react";
 import SearchChatsModal from "./components/SearchChatsModal";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
@@ -1392,11 +1392,13 @@ function App() {
 
                                   {/* More */}
                                   <button
+
                                     className="action-btn"
-                                    title="More options"
-                                    onClick={() => handleMoreOptions(i)}
+                                    title="Read Aloud"
+                                    onClick={() =>speakWithRiva(msg.text) }
+                                    
                                   >
-                                    <MoreHorizontal size={18} />
+                                    <Volume2  size={18} />
                                   </button>
                                 </div>
                               )}
@@ -1692,7 +1694,7 @@ function App() {
 
                       {/* Your other buttons here */}
 
-                      <button
+                      {/* <button
                         className={`icon-btn mic-btn ${listening ? "active" : ""}`}
                         onClick={() => {
                           if (listening) {
@@ -1731,7 +1733,7 @@ function App() {
                             fill="none"
                           />
                         </svg>
-                      </button>
+                      </button> */}
                     </>
                   ) : (
                     <div className="dictation-mode">
@@ -1808,27 +1810,27 @@ function App() {
                           <rect x="6" y="6" width="12" height="12" />
                         </svg>
                       </button>
-                    ) : input.trim() === "" ? (
-                      <button
-                        className="voice-model-button"
-                        onClick={() => setShowVoiceModal(true)}
-                        title="Select Voice Model"
-                        type="button"
-                        style={{ background: "transparent", border: "none", outline: "none", padding: 0, cursor: "pointer" }}
-                      >
-                        <div className="animated-bars">
-                          {bars.map((_, i) => (
-                            <span
-                              key={i}
-                              className="bar"
-                              style={{
-                                animationDelay: getRandomDelay(),
-                                animationDuration: getRandomDuration(),
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </button>
+                    // ) : input.trim() === "" ? (
+                    //   <button
+                    //     className="voice-model-button"
+                    //     onClick={() => setShowVoiceModal(true)}
+                    //     title="Select Voice Model"
+                    //     type="button"
+                    //     style={{ background: "transparent", border: "none", outline: "none", padding: 0, cursor: "pointer" }}
+                    //   >
+                    //     <div className="animated-bars">
+                    //       {bars.map((_, i) => (
+                    //         <span
+                    //           key={i}
+                    //           className="bar"
+                    //           style={{
+                    //             animationDelay: getRandomDelay(),
+                    //             animationDuration: getRandomDuration(),
+                    //           }}
+                    //         />
+                    //       ))}
+                    //     </div>
+                    //   </button>
 
                     ) : (
                       <button

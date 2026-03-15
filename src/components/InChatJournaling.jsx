@@ -135,12 +135,12 @@ const InChatJournaling = ({ initialEntry, onSave, onAISuggest, onExpandChange, o
                   <FaEdit /> Edit
                 </button>
 
-                <button className="save-btn" onClick={(e) => {
+                {/* <button className="save-btn" onClick={(e) => {
                   e.stopPropagation();
                   handleAISuggest();
                 }}>
                   <FaMagic /> Suggest
-                </button>
+                </button> */}
               </div>
 
               {aiSuggestion && (

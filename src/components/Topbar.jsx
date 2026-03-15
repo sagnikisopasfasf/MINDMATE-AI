@@ -74,10 +74,10 @@ const Topbar = ({ user, onLogout, onToggleSidebar, sidebarOpen, goToPremium, onO
 
               <hr style={{ margin: "5px 0", borderColor: 'rgba(255,255,255,0.2)' }} />
 
-              <button className="menu-item flex items-center px-4 py-2 w-full text-white hover:bg-gray-700">
+              {/* <button className="menu-item flex items-center px-4 py-2 w-full text-white hover:bg-gray-700">
                 <UserPen size={18} className="mr-2 text-white" />
                 Profile
-              </button>
+              </button> */}
 
               <button
                 className="menu-item flex items-center px-4 py-2 w-full text-white hover:bg-gray-700"
@@ -90,10 +90,10 @@ const Topbar = ({ user, onLogout, onToggleSidebar, sidebarOpen, goToPremium, onO
                 Settings
               </button>
 
-              <button className="menu-item flex items-center px-4 py-2 w-full text-white hover:bg-gray-700">
+              {/* <button className="menu-item flex items-center px-4 py-2 w-full text-white hover:bg-gray-700">
                 <LifeBuoy size={18} className="mr-2 text-white" />
                 Help
-              </button>
+              </button> */}
 
               <hr style={{ margin: "5px 0", borderColor: 'rgba(255,255,255,0.2)' }} />
 

@@ -22,11 +22,11 @@ import {
 
 const sections = [
   { id: "general", label: "General" },
-  { id: "notifications", label: "Notifications" },
-  { id: "personalization", label: "Personalization" },
-  { id: "connected", label: "Connected apps" },
-  { id: "data", label: "Data controls" },
-  { id: "security", label: "Security" },
+  // { id: "notifications", label: "Notifications" },
+  // { id: "personalization", label: "Personalization" },
+  // { id: "connected", label: "Connected apps" },
+  // { id: "data", label: "Data controls" },
+  // { id: "security", label: "Security" },
   { id: "account", label: "Account" },
 ];
 

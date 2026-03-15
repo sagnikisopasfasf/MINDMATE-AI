@@ -20,21 +20,31 @@ import { collection, addDoc, getDocs, query, where, doc, updateDoc } from "fireb
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import LOGO2 from "../assets/LOGO2.svg";
-import OpenAI from "openai";
 import { deleteDoc } from "firebase/firestore";
 
 
+const generateGoalSuggestions = async (category) => {
 
+    const response = await fetch(
+        "https://mindmate-ai-api.onrender.com/api/v1/",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify([
+                {
+                    role: "user",
+                    content: `Generate 3 small daily goals for ${category}`
+                }
+            ])
+        }
+    );
 
-const a4fApiKey = "ddc-a4f-ea451e35a968496890c6b79e89ab832f";
-const a4fBaseUrl = "https://api.a4f.co/v1";
+    const data = await response.json();
 
-const a4fClient = new OpenAI({
-    apiKey: a4fApiKey,
-    baseURL: a4fBaseUrl,
-    dangerouslyAllowBrowser: true,
-});
-
+    return data.content;
+};
 
 const quotes = [
     "Success is built on daily discipline.",
@@ -181,16 +191,37 @@ const GoalsPage = ({ floatingInputBar }) => {
     }, []);
 
     // Called when pillar clicked (non-custom)
-    const openTopicMode = (pillar) => {
-        // If clicking same pillar again, keep it open
+    const openTopicMode = async (pillar) => {
         setActiveTopic(pillar.title);
-        // Prepare initial AI message combining tip + a random challenge (if exists)
-        const challengeArr = challenges[pillar.title] || [];
-        const challenge = challengeArr.length ? challengeArr[Math.floor(Math.random() * challengeArr.length)] : "";
-        const intro = `You are now in ${pillar.title} mode. Topic: ${pillar.title}. Tip: ${pillar.tip}${challenge ? ` Suggested challenge: ${challenge}.` : ""}`;
 
-        // Reset chat and add bot intro
+        const challengeArr = challenges[pillar.title] || [];
+        const challenge =
+            challengeArr.length
+                ? challengeArr[Math.floor(Math.random() * challengeArr.length)]
+                : "";
+
+        const intro = `You are now in ${pillar.title} mode.
+Tip: ${pillar.tip}
+${challenge ? `Suggested challenge: ${challenge}` : ""}`;
+
         setTopicChat([{ from: "bot", text: intro }]);
+
+        try {
+            const suggestions = await generateGoalSuggestions(pillar.title);
+
+            if (suggestions) {
+                setTopicChat((prev) => [
+                    ...prev,
+                    {
+                        from: "bot",
+                        text: `Here are some goals you can start today:\n\n${suggestions}`
+                    }
+                ]);
+            }
+        } catch (err) {
+            console.error("Goal suggestion error:", err);
+        }
+
         setTopicInput("");
     };
 
@@ -202,64 +233,58 @@ const GoalsPage = ({ floatingInputBar }) => {
         setTopicLoading(false);
     };
 
-    // Send message within topic mode. This function enforces scope in system prompt.
-    // Send message within topic mode. This function enforces scope in system prompt.
     const sendTopicMessage = async () => {
+
         const trimmed = topicInput.trim();
         if (!trimmed) return;
 
-        // append user message locally
         setTopicChat((prev) => [...prev, { from: "user", text: trimmed }]);
         setTopicInput("");
         setTopicLoading(true);
 
-        // Build strict system prompt that enforces scope
-        const systemPrompt = `
-You are an assistant limited to discussing the topic "${activeTopic}".
-You must only reply with help, advice and examples directly related to "${activeTopic}".
-If the user ask something to do which is related to users help for better understandind of the "${activeTopic}"do that. 
-Keep responses focused, actionable, empathetic and no longer than 6 sentences.
-Include one short actionable step the user can try right now.
-    `.trim();
-
-        // Add context (tip + challenge) if available
-        const pillar = pillars.find(p => p.title === activeTopic);
-        const extraContext = pillar ? `Context: ${pillar.tip}` : "";
-
-        // ✅ Build proper messages array
-        const messagesToSend = [
-            { role: "system", content: systemPrompt + "\n" + extraContext },
-            ...topicChat.map(m => ({
-                role: m.from === "bot" ? "assistant" : "user",
-                content: m.text
-            })),
-            { role: "user", content: trimmed }
-        ];
-
         try {
-            const callA4F = async ({ model = "provider-3/gpt-4o-mini", messages }) => {
-                try {
-                    const response = await a4fClient.chat.completions.create({ model, messages });
-                    return response.choices?.[0]?.message?.content?.trim() || null;
-                } catch (err) {
-                    console.error("A4F API Error:", err);
-                    return null;
+
+            const messagesToSend = [
+                {
+                    role: "system",
+                    content: `You are an assistant helping with ${activeTopic} goals. Give short practical advice.`
+                },
+                {
+                    role: "user",
+                    content: trimmed
                 }
-            };
+            ];
 
-            const aiReply = await callA4F({ model: "provider-3/gpt-4o-mini", messages: messagesToSend });
-            const reply = aiReply || "Sorry — I couldn't generate a reply.";
+            const response = await fetch(
+                "https://mindmate-ai-api.onrender.com/api/v1/",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(messagesToSend),
+                }
+            );
 
-            setTopicChat((prev) => [...prev, { from: "bot", text: reply }]);
-        } catch (err) {
-            console.error("Topic AI error:", err);
+            const data = await response.json();
+
+            const reply = data.content || "Sorry — I couldn't generate a reply.";
+
             setTopicChat((prev) => [
                 ...prev,
-                { from: "bot", text: "Sorry, I couldn't respond right now." },
+                { from: "bot", text: reply }
             ]);
-        } finally {
-            setTopicLoading(false);
+
+        } catch (err) {
+            console.error("Topic AI error:", err);
+
+            setTopicChat((prev) => [
+                ...prev,
+                { from: "bot", text: "Failed to respond." }
+            ]);
         }
+
+        setTopicLoading(false);
     };
 
     // handle Enter to send in topic mode

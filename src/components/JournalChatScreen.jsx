@@ -207,7 +207,7 @@ const JournalEntry = ({ entry, onDelete }) => {
                         >
                             <FaEdit /> Edit
                         </button>
-                        <button
+                        {/* <button
                             className="save-btn"
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -215,7 +215,7 @@ const JournalEntry = ({ entry, onDelete }) => {
                             }}
                         >
                             <FaMagic /> Suggest
-                        </button>
+                        </button> */}
                     </div>
 
                     {aiSuggestion && (
