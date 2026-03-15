@@ -115,7 +115,6 @@ function App() {
   const [showJournaling, setShowJournaling] = useState(false);
   const [journals, setJournals] = useState([]); // list of entries
   const [activeJournal, setActiveJournal] = useState(null); // currently opened
-  const [listening, setListening] = useState(false);
   const currentVolume = useMicVolume(listening);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [dismissedLoginModal, setDismissedLoginModal] = useState(
@@ -252,15 +251,14 @@ function App() {
 
 
   // Voice recognition hooks
-  const { transcript, resetTranscript } = useSpeechRecognition();
+  const { transcript, resetTranscript, listening } = useSpeechRecognition();
   if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
   console.log("Speech recognition not supported in this browser");
   }
   useEffect(() => {
   if (!listening && transcript.trim()) {
-    sendMessage(transcript.trim());
-    resetTranscript();
-    }
+    setInput(transcript);   
+   }
   }, [transcript, listening]);
 
   // Function: Speak text with ElevenLabs Rachel voice
@@ -1718,22 +1716,21 @@ useEffect(() => {
                       <button
                       className={`icon-btn mic-btn ${listening ? "active" : ""}`}
                       onClick={() => {
-                        if (listening) {
-                          SpeechRecognition.stopListening();
-                          setListening(false);
-                        } else {
-                          resetTranscript();
-                          setListening(true);
+                       if (listening) {
+                        SpeechRecognition.stopListening();
+                      } else {
+                        resetTranscript();
 
-                          SpeechRecognition.startListening({
-                          continuous: false,
-                          language: "en-US"
-                        });
-                      }
-                     }}
-                     title="Voice Input"
-                     type="button"
-                     >
+                        SpeechRecognition.startListening({
+                        continuous: false,
+                        interimResults: true,
+                        language: "en-US"
+                      });
+                    }
+                   }}
+                   title="Voice Input"
+                   type="button"
+                   >
                         <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
                           <path
                             d="M12 14a4 4 0 004-4V5a4 4 0 10-8 0v5a4 4 0 004 4zm5-4a5 5 0 01-10 0M19 10v1a7 7 0 01-14 0v-1M12 19v3m-4 0h8"
@@ -1755,11 +1752,11 @@ useEffect(() => {
                         <button
                           className="tick-btn"
                           onClick={() => {
-                            SpeechRecognition.stopListening();
-                            setListening(false);
-                            if (transcript.trim()) {
-                              sendMessage(transcript.trim());
-                              resetTranscript();
+                           SpeechRecognition.stopListening();
+
+                           if (transcript.trim()) {
+                            sendMessage(transcript.trim());
+                            resetTranscript();
                             }
                           }}
                         >
