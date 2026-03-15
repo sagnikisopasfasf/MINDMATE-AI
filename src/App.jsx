@@ -133,7 +133,7 @@ function App() {
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
   const { transcript, resetTranscript, listening } = useSpeechRecognition();
-  const browserSupportsSpeechRecognition =SpeechRecognition.browserSupportsSpeechRecognition();
+  const browserSupportsSpeechRecognition = SpeechRecognition.browserSupportsSpeechRecognition();
   if (!browserSupportsSpeechRecognition) {
     console.log("Speech recognition not supported");
   }
@@ -528,6 +528,15 @@ function App() {
     return () => window.removeEventListener("resize", resizeHandler);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SR) {
+      console.warn("Speech recognition not supported in this browser.");
+    }
+  }, []);
 
   useEffect(() => {
     const authInstance = getAuth();
@@ -1648,12 +1657,21 @@ function App() {
                             SpeechRecognition.stopListening();
                           } else {
                             resetTranscript();
+                            if (typeof window !== "undefined") {
+                              const SpeechRecognitionAPI =
+                                window.SpeechRecognition || window.webkitSpeechRecognition;
 
-                            SpeechRecognition.startListening({
-                              continuous: false,
-                              interimResults: true,
-                              language: "en-US"
-                            });
+                              if (!SpeechRecognitionAPI) {
+                                console.log("Speech recognition not supported");
+                                return;
+                              }
+
+                              SpeechRecognition.startListening({
+                                continuous: false,
+                                interimResults: true,
+                                language: "en-US"
+                              });
+                            }
                           }
                         }}
                         title="Voice Input"
