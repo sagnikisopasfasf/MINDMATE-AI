@@ -13,6 +13,7 @@ const VoiceCloud = () => {
   const voiceLevel = Math.max(volume, assistantVolume);
   const [micActive, setMicActive] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState("Mia");
   let state = "idle";
   if (listening) state = "listening";
   if (assistantVolume > 0.02) state = "speaking";
@@ -23,7 +24,7 @@ const VoiceCloud = () => {
   const speakWithRiva = async (text) => {
     try {
 
-      // 🔴 Stop mic before assistant speaks
+      // Stop mic before assistant speaks
       SpeechRecognition.stopListening();
 
       const res = await fetch(
@@ -35,7 +36,7 @@ const VoiceCloud = () => {
           },
           body: JSON.stringify({
             text,
-            voice: "Mia",
+            voice: selectedVoice,
           }),
         }
       );
@@ -82,7 +83,7 @@ const VoiceCloud = () => {
           SpeechRecognition.startListening({
             continuous: true,
             interimResults: true,
-             maxAlternatives: 3,
+            maxAlternatives: 3,
             language: "en-IN"
           });
         }
@@ -125,23 +126,21 @@ const VoiceCloud = () => {
   };
 
   useEffect(() => {
-    if (transcript.trim().length > 3 && !processing) {
 
-      if (transcript.trim().length < 2) return;
+    if (!listening && transcript.trim().length > 1 && !processing) {
 
+      const finalText = transcript.trim();
 
-      const timeout = setTimeout(async () => {
-        setProcessing(true);
+      setProcessing(true);
 
-        await sendVoiceMessage(transcript);
-
+      sendVoiceMessage(finalText).finally(() => {
         resetTranscript();
         setProcessing(false);
-      }, 1200);
+      });
 
-      return () => clearTimeout(timeout);
     }
-  }, [transcript]);
+
+  }, [listening]);
 
   useEffect(() => {
     let ctx, analyser, source, dataArray, rafId, stream;
@@ -247,6 +246,10 @@ const VoiceCloud = () => {
             listening={listening}
           />
         </div>
+
+        <div className="voice-transcript">
+          {transcript || (listening ? "Listening..." : "Tap the mic and speak")}
+        </div>
       </div>
 
       <div className="controls">
@@ -261,7 +264,7 @@ const VoiceCloud = () => {
               SpeechRecognition.startListening({
                 continuous: true,
                 interimResults: true,
-                 maxAlternatives: 3,
+                maxAlternatives: 3,
                 language: "en-IN"
               });
               setMicActive(true);
