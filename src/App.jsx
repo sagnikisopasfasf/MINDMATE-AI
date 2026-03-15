@@ -133,45 +133,10 @@ function App() {
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
   const { transcript, resetTranscript, listening } = useSpeechRecognition();
-
-  const startVoice = async () => {
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
-        console.log("Speech recognition not supported");
-        return;
-      }
-
-      // force stop any previous instance
-      SpeechRecognition.stopListening();
-
-      // small delay so browser initializes recognition
-      setTimeout(() => {
-        SpeechRecognition.startListening({
-          continuous: true,
-          interimResults: true,
-          language: "en-US",
-        });
-      }, 150);
-
-    } catch (err) {
-      console.error("Mic start error:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
-      console.log("Speech recognition not supported");
-    }
-  }, []);
-
-  useEffect(() => {
-    navigator.mediaDevices
-      ?.getUserMedia({ audio: true })
-      .catch((err) => console.log("Mic permission denied:", err));
-  }, []);
-
+  const browserSupportsSpeechRecognition =SpeechRecognition.browserSupportsSpeechRecognition();
+  if (!browserSupportsSpeechRecognition) {
+    console.log("Speech recognition not supported");
+  }
   const currentVolume = useMicVolume(listening);
 
   const [selectedVoice, setSelectedVoice] = useState({
@@ -1683,7 +1648,12 @@ function App() {
                             SpeechRecognition.stopListening();
                           } else {
                             resetTranscript();
-                            startVoice();
+
+                            SpeechRecognition.startListening({
+                              continuous: false,
+                              interimResults: true,
+                              language: "en-US"
+                            });
                           }
                         }}
                         title="Voice Input"
