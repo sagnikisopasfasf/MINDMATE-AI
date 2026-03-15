@@ -608,20 +608,6 @@ function App() {
     }
   }, [user, isGuest, location.pathname, navigate]);
 
-  useEffect(() => {
-    if (previewListening) {
-      resetTranscript();
-      SpeechRecognition.startListening({ continuous: true });
-    } else {
-      SpeechRecognition.stopListening();
-    }
-  }, [previewListening]);
-
-  useEffect(() => {
-    if (previewListening && transcript.trim()) {
-      resetTranscript();
-    }
-  }, [transcript]);
 
   useEffect(() => {
     const fetchJournals = async () => {
@@ -1686,8 +1672,10 @@ function App() {
                             SpeechRecognition.stopListening();
                           } else {
                             resetTranscript();
+
                             SpeechRecognition.startListening({
-                              continuous: true,
+                              continuous: false,
+                              interimResults: true,
                               language: "en-US"
                             });
                           }
@@ -1704,7 +1692,6 @@ function App() {
                           />
                         </svg>
                       </button>
-
                     </>
                   ) : (
                     <div className="dictation-mode">
