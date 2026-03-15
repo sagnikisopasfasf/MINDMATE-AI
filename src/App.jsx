@@ -138,11 +138,23 @@ function App() {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      SpeechRecognition.startListening({
-        continuous: true,
-        interimResults: true,
-        language: "en-US",
-      });
+      if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
+        console.log("Speech recognition not supported");
+        return;
+      }
+
+      // force stop any previous instance
+      SpeechRecognition.stopListening();
+
+      // small delay so browser initializes recognition
+      setTimeout(() => {
+        SpeechRecognition.startListening({
+          continuous: true,
+          interimResults: true,
+          language: "en-US",
+        });
+      }, 150);
+
     } catch (err) {
       console.error("Mic start error:", err);
     }
