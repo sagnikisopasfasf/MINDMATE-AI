@@ -87,6 +87,7 @@ function App() {
     }, 200);
   };
   const [chatTitles, setChatTitles] = useState([]);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
@@ -115,8 +116,7 @@ function App() {
   const [showJournaling, setShowJournaling] = useState(false);
   const [journals, setJournals] = useState([]); // list of entries
   const [activeJournal, setActiveJournal] = useState(null); // currently opened
-  const [listening, setListening] = useState(false);
-  const currentVolume = useMicVolume(listening);
+
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [dismissedLoginModal, setDismissedLoginModal] = useState(
     () => localStorage.getItem("dismissLoginModal") === "true"
@@ -132,12 +132,13 @@ function App() {
   const [isStopping, setIsStopping] = useState(false);
   const stopTypingRef = useRef(false);  // Flag to break typing loop
   const currentTypingTextRef = useRef("");  // Track partial text during typing
+  const { transcript, resetTranscript, listening } = useSpeechRecognition();
 
-
+  const currentVolume = useMicVolume(listening);
 
   const [selectedVoice, setSelectedVoice] = useState({
-    id: "ROMJ9yK1NAMuu1ggrjDW",
-    name: "Rachel"
+    id: "mia",
+    name: "Mia"
   });
 
   const displayedChats = user
@@ -202,16 +203,6 @@ function App() {
     SpeechRecognition.startListening({ continuous: true });
   };
 
-  // When user stops
-  const handleStopListening = () => {
-    SpeechRecognition.stopListening();
-    setPreviewListening(false);
-    setShowListeningModal(false);
-    if (transcript.trim()) sendMessage(transcript.trim());
-    resetTranscript();
-  };
-
-
 
 
 
@@ -247,95 +238,79 @@ function App() {
   };
 
 
-  // Voice recognition hooks
-  const { transcript, resetTranscript } = useSpeechRecognition();
+
 
   // Function: Speak text with ElevenLabs Rachel voice
   // Wrap the Howl playback with an analyser
-  const speakWithRachel = async (text) => {
-    const voiceId = selectedVoice.id;
-    const apiKey = process.env.REACT_APP_ELEVENLABS_KEY;
-
+  const speakWithRiva = async (text) => {
     try {
       setIsSpeaking(true);
 
-      const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      const res = await fetch(
+        "https://mindmate-ai-api.onrender.com/api/v1/audio/",
         {
           method: "POST",
           headers: {
-            "xi-api-key": apiKey,
-            "Content-Type": "application/json",
-            Accept: "audio/mpeg",
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
             text,
-            model_id: "eleven_monolingual_v1",
-            voice_settings: { stability: 0.3, similarity_boost: 0.9, style: 0.7 },
-          }),
+            voice: selectedVoice.name
+          })
         }
       );
 
-      // Convert to playable blob
-      const arrayBuffer = await response.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
-      const sound = new Howl({ src: [url], html5: true });
+      const sound = new Howl({
+        src: [url],
+        format: ["wav"],
+        html5: true
+      });
 
-      // Create audio context + analyser
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      let analyser;
-      let source;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
 
       sound.once("play", () => {
-        const audioElement = sound._sounds[0]._node; // Howler wraps an <audio>
-        source = audioCtx.createMediaElementSource(audioElement);
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 256;
+        const audioElement = sound._sounds[0]._node;
+        const source = ctx.createMediaElementSource(audioElement);
 
         source.connect(analyser);
-        analyser.connect(audioCtx.destination);
+        analyser.connect(ctx.destination);
 
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        // Animate orb with AI speech
-        const volumeInterval = setInterval(() => {
+        const updateVolume = () => {
           analyser.getByteFrequencyData(dataArray);
-          const avg =
-            dataArray.reduce((sum, val) => sum + val, 0) / dataArray.length;
-          setAssistantVolume(avg / 256); // normalized 0–1
-        }, 50);
 
-        sound.on("end", () => {
-          clearInterval(volumeInterval);
-          setAssistantVolume(0);
-          setIsSpeaking(false);
-        });
+          const avg =
+            dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+
+          setAssistantVolume(avg / 256);
+
+          if (sound.playing()) {
+            requestAnimationFrame(updateVolume);
+          }
+        };
+
+        updateVolume();
+      });
+
+      sound.on("end", () => {
+        setAssistantVolume(0);
+        setIsSpeaking(false);
+        URL.revokeObjectURL(url);
+        ctx.close();
       });
 
       sound.play();
     } catch (err) {
-      console.error("Voice failed:", err.message);
+      console.error("TTS error:", err);
       setIsSpeaking(false);
-      setAssistantVolume(0);
     }
   };
-
-  const handlePreviewAIResponse = async (text) => {
-    try {
-      // Example: send to your AI backend
-      console.log("Preview AI response:", text);
-
-      // if you want to also speak it:
-      await speakWithRachel(text);
-
-    } catch (err) {
-      console.error("Error in preview AI response:", err);
-    }
-  };
-
 
   // Stop speaking immediately
   const handleStopSpeaking = () => {
@@ -421,7 +396,7 @@ function App() {
       setChatLog((prev) => [...prev, { from: "bot", text: aiReply }]);
 
       // Speak only the AI’s reply
-      if (autoSpeak) await speakWithRachel(aiReply);
+      if (autoSpeak) await speakWithRiva(aiReply);
     } catch (err) {
       console.error("AI error:", err);
       setChatLog((prev) => [
@@ -431,64 +406,55 @@ function App() {
     }
   };
 
-useEffect(() => {
+  useEffect(() => {
+    if (!isThinking) return;
 
-  const circle = ringRef.current;
-  if (!circle) return;
+    const circle = ringRef.current;
+    if (!circle) return;
 
-  const circumference = 2 * Math.PI * 40;
+    const circumference = 2 * Math.PI * 40;
 
-  let arc = 0.2;
-  let targetArc = Math.random() * 0.6 + 0.15;
+    let arc = 0.2;
+    let targetArc = Math.random() * 0.6 + 0.15;
+    let offset = 0;
 
-  let offset = 0;
+    const animate = () => {
+      if (!isThinking) return;
 
-  const animate = () => {
+      arc += (targetArc - arc) * 0.02;
 
-    // smoothly move arc toward target
-    arc += (targetArc - arc) * 0.02;
+      if (Math.abs(targetArc - arc) < 0.01) {
+        targetArc = Math.random() * 0.6 + 0.15;
+      }
 
-    // once close → choose new random arc
-    if (Math.abs(targetArc - arc) < 0.01) {
-      targetArc = Math.random() * 0.6 + 0.15;
-    }
+      offset += 0.6;
 
-    offset += 0.6;
+      const visible = circumference * arc;
 
-    const visible = circumference * arc;
+      circle.style.strokeDasharray = `${visible} ${circumference}`;
+      circle.style.strokeDashoffset = offset;
 
-    circle.style.strokeDasharray = `${visible} ${circumference}`;
-    circle.style.strokeDashoffset = offset;
+      requestAnimationFrame(animate);
+    };
 
-    requestAnimationFrame(animate);
-  };
+    animate();
+  }, [isThinking]);
 
-  animate();
-
-}, []);
-  
-  // When voice recognition stops, send the captured transcript
   useEffect(() => {
     if (!listening && transcript.trim()) {
-      // Explicitly pass transcript
       sendMessage(transcript.trim());
       resetTranscript();
     }
   }, [listening]);
 
 
-
-
   // Auto-scroll only if user is near bottom
   useEffect(() => {
-    const container = messagesEndRef.current?.parentNode;
+    const container = chatBodyRef.current;
     if (!container) return;
 
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-
-    if (isNearBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!userScrolledUp) {
+      container.scrollTop = container.scrollHeight;
     }
   }, [chatLog]);
 
@@ -519,38 +485,37 @@ useEffect(() => {
 
 
   useEffect(() => {
-    const chatBody = chatBodyRef.current;
-    if (chatBody) {
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
-  }, [location]);
+    const container = chatBodyRef.current;
+    if (!container) return;
+
+    container.scrollTop = container.scrollHeight;
+  }, []);
 
   useEffect(() => {
     const chatBody = chatBodyRef.current;
     if (!chatBody) return;
 
-    // Scroll to bottom on mount or navigation
-    const scrollToBottom = () => {
-      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
-    };
-
-    scrollToBottom(); // initial scroll
-
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = chatBody;
-      const atBottom = scrollHeight - scrollTop - clientHeight <= 50;
+
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+      const atBottom = distanceFromBottom < 120;
+
       setShowScrollButton(!atBottom);
+      setUserScrolledUp(!atBottom);
     };
 
     chatBody.addEventListener("scroll", handleScroll);
-    return () => chatBody.removeEventListener("scroll", handleScroll);
-  }, [chatLog, location]); // rerun on messages or route change
 
+    return () => chatBody.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const scrollToBottom = () => {
     const chatBody = chatBodyRef.current;
     if (chatBody) {
-      chatBody.scrollTo({ top: chatBody.scrollHeight, behavior: "smooth" });
+      chatBody.scrollTop = chatBody.scrollHeight;
+      setUserScrolledUp(false);
     }
   };
 
@@ -883,8 +848,8 @@ useEffect(() => {
   // `;
   let newChatId = null;
   const sendMessage = async (msgText = input) => {
+    if (isTyping || isThinking) return;
     if (!msgText.trim()) return;
-    setIsThinking(true);   // start animation
 
     if (showChips) {
       setShowChips(false);
@@ -903,6 +868,7 @@ useEffect(() => {
 
     setInput("");
     setIsTyping(true);
+    setIsThinking(true);
 
     stopTypingRef.current = false;
     currentTypingTextRef.current = "";
@@ -993,7 +959,7 @@ useEffect(() => {
         });
 
         currentTypingTextRef.current = currentText;
-        await new Promise((r) => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 20));
       }
 
       // 5️⃣ Finalize message
@@ -1041,9 +1007,16 @@ useEffect(() => {
   // Select chat from sidebar to load messages
   const handleSelectChat = (chatId) => {
     const selected = chatTitles.find(c => c.id === chatId);
+
     if (selected) {
       setActiveChatId(chatId);
       setChatLog(selected.messages || []);
+
+      // load the correct saved title
+      setFullTitle(selected.title || "");
+      setTitleTyping("");
+      setHasGeneratedTitle(true);
+
       setShowWelcome(false);
       setShowMoodTracker(false);
     }
@@ -1175,15 +1148,16 @@ useEffect(() => {
 
 
   const handleRegenerate = (index) => {
-    // Find the last user message before this bot reply
+    if (isTyping || isThinking) return;
+
     const lastUserMsg = [...chatLog]
       .slice(0, index)
       .reverse()
       .find((m) => m.from === "user");
 
     if (!lastUserMsg) return;
-    // Call your existing message send function
-    sendMessage(lastUserMsg.text, true); // Pass true to indicate it's regeneration
+
+    sendMessage(lastUserMsg.text);
   };
 
   const handleMoreOptions = (index) => {
@@ -1342,7 +1316,7 @@ useEffect(() => {
                                   <p className="text-[15px] leading-relaxed">{msg.text}</p>
                                 )}
                               </div>
-                              {isBot && (
+                              {isBot && !msg.typing && (
                                 <div className="message-actions">
                                   {/* Copy */}
                                   <button
@@ -1525,7 +1499,7 @@ useEffect(() => {
 
 
                     <button
-                      className={`scroll-to-bottom-btn ${showScrollButton ? "show" : ""}`}
+                      className={`scroll-to-bottom-btn ${userScrolledUp ? "show" : ""}`}
                       onClick={scrollToBottom}
                     >
                       <FaArrowDown style={{ color: "white", width: "16px", height: "24px" }} />
@@ -1694,7 +1668,10 @@ useEffect(() => {
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
-                            sendMessage();
+
+                            if (!isTyping && !isThinking) {
+                              sendMessage();
+                            }
                           }
                         }}
                       />
@@ -1707,11 +1684,12 @@ useEffect(() => {
                         onClick={() => {
                           if (listening) {
                             SpeechRecognition.stopListening();
-                            setListening(false);
                           } else {
                             resetTranscript();
-                            SpeechRecognition.startListening({ continuous: true });
-                            setListening(true);
+                            SpeechRecognition.startListening({
+                              continuous: true,
+                              language: "en-US"
+                            });
                           }
                         }}
                         title="Voice Input"
@@ -1739,11 +1717,6 @@ useEffect(() => {
                           className="tick-btn"
                           onClick={() => {
                             SpeechRecognition.stopListening();
-                            setListening(false);
-                            if (transcript.trim()) {
-                              sendMessage(transcript.trim());
-                              resetTranscript();
-                            }
                           }}
                         >
                           <svg
@@ -1766,7 +1739,6 @@ useEffect(() => {
                           className="cross-btn"
                           onClick={() => {
                             SpeechRecognition.stopListening();
-                            setListening(false);
                             resetTranscript();
                           }}
                         >
@@ -1881,17 +1853,18 @@ useEffect(() => {
                     <h2 className="voice-modal-title">Choose a Voice</h2>
                     <ul className="voice-list">
                       {[
-                        { id: "ROMJ9yK1NAMuu1ggrjDW", name: "Rachel", desc: "Calm & natural" },
-                        { id: "EXAVITQu4vr4xnSDxMaL", name: "James", desc: "Warm, deep male" },
-                        { id: "21m00Tcm4TlvDq8ikWAM", name: "Sofia", desc: "Friendly, empathetic" },
-                        { id: "AZnzlk1XvdvUeBnXmlld", name: "Michael", desc: "Professional male" }
+                        { id: "mia", name: "Mia", desc: "Clear female voice" },
+                        { id: "aria", name: "Aria", desc: "Smooth assistant voice" },
+                        { id: "sofia", name: "Sofia", desc: "Friendly tone" },
+                        { id: "jason", name: "Jason", desc: "Neutral male voice" },
+                        { id: "leo", name: "Leo", desc: "Warm male voice" }
                       ].map((v) => (
                         <li
                           key={v.id}
                           className={`voice-item ${selectedVoice.id === v.id ? "active" : ""}`}
                           onClick={() => {
                             setSelectedVoice(v);
-                            setShowVoicePreview(true); // Show the two buttons
+                            setShowVoicePreview(true);
                           }}
                         >
                           <div className="voice-name">{v.name}</div>
@@ -1988,7 +1961,7 @@ useEffect(() => {
         element={
           <VoiceCloud
             assistantVolume={assistantVolume}
-            speakWithRachel={speakWithRachel} // pass the function
+            speakWithRiva={speakWithRiva}
           />
         }
       />

@@ -4,11 +4,24 @@ import * as THREE from "three";
 import useMicVolume from "../hooks/useMicVolume";
 
 // Voice reactive orb particles
-function VoiceOrb({ volume = 0, active = false }) {
+function CloudyOrb({ volume = 0, assistantVolume = 0, listening = false }) {
   const pointsRef = useRef();
   const stateRef = useRef({ wake: 0 });
   const particleCount = 2200;
   const baseRadius = 1.12;
+  const voiceLevel = Math.max(volume, assistantVolume);
+
+  let state = "idle";
+
+  if (listening) {
+    state = "listening";
+  }
+
+  if (assistantVolume > 0.02) {
+    state = "speaking";
+  }
+
+  const active = voiceLevel > 0.02;
 
   const data = useMemo(() => {
     const pos = new Float32Array(particleCount * 3);
@@ -32,6 +45,7 @@ function VoiceOrb({ volume = 0, active = false }) {
   }, []);
 
   useFrame(({ clock }) => {
+    if (!pointsRef.current) return;
     const t = clock.getElapsedTime();
     const pos = pointsRef.current.geometry.attributes.position.array;
     const ang = data.angles;
@@ -52,9 +66,9 @@ function VoiceOrb({ volume = 0, active = false }) {
     const wake = stateRef.current.wake;
 
     /* ---------- MOTION ---------- */
-    const breathe = Math.sin(t * 2) * 0.06;
-    const voice = Math.min(volume * 0.9, 0.6);
-    const swirl = t * (0.2 + wake * 0.8);
+    const breathe = Math.sin(t * 1.2) * 0.05;
+    const voiceLevel = Math.max(volume, assistantVolume);
+    const voice = Math.pow(voiceLevel, 0.6) * 0.5; const swirl = t * (0.2 + wake * 0.8);
 
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
@@ -100,7 +114,13 @@ function VoiceOrb({ volume = 0, active = false }) {
       </bufferGeometry>
 
       <pointsMaterial
-        color="#f3f4f6"
+        color={
+          state === "listening"
+            ? "#22c55e"
+            : state === "speaking"
+              ? "#60a5fa"
+              : "#a855f7"
+        }
         size={0.028}
         transparent
         opacity={0.8}
@@ -114,41 +134,58 @@ function VoiceOrb({ volume = 0, active = false }) {
 
 
 // Main Component
-export default function VoiceReactiveOrb() {
-    const audioRef = useRef();
-    const volume = useMicVolume(audioRef);
+export default function VoiceReactiveOrb({ assistantVolume = 0 }) {
 
-    useEffect(() => {
-        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-            if (audioRef.current) {
-                audioRef.current.srcObject = stream;
-                audioRef.current.muted = true;
-                audioRef.current.play();
-            }
-        });
-    }, []);
+  const audioRef = useRef();
+  const volume = useMicVolume(audioRef);
+  useEffect(() => {
+    const startMic = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    return (
-        <div
-            style={{
-                width: "300px",
-                height: "300px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-            }}
-        >
-            <audio ref={audioRef} style={{ display: "none" }} />
-            <Canvas
-  gl={{ alpha: true, antialias: true }}
-  camera={{ position: [0, 0, 3.3], fov: 55 }}
->
-  <ambientLight intensity={0.4} />
-  <VoiceOrb volume={volume} />
-</Canvas>
+      if (audioRef.current) {
+        audioRef.current.srcObject = stream;
+        audioRef.current.muted = true;
+        await audioRef.current.play();
+      }
+    };
+
+    const start = () => {
+      document.removeEventListener("click", start);
+      startMic();
+    };
+
+    document.addEventListener("click", start);
+
+    return () => document.removeEventListener("click", start);
+  }, []);
 
 
-        </div>
-    );
+  return (
+    <div
+      style={{
+        width: "300px",
+        height: "300px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "transparent",
+      }}
+    >
+      <audio ref={audioRef} style={{ display: "none" }} />
+      <Canvas
+        gl={{ alpha: true, antialias: true }}
+        camera={{ position: [0, 0, 3.3], fov: 55 }}
+      >
+        <ambientLight intensity={0.4} />
+        <CloudyOrb
+          volume={volume}
+          assistantVolume={assistantVolume}
+          listening={volume > 0.02}
+        />
+
+      </Canvas>
+
+
+    </div>
+  );
 }

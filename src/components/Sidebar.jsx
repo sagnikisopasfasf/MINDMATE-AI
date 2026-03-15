@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+
 import {
   SmilePlus,
   NotebookPen,
@@ -13,7 +13,7 @@ import {
 import LOGO2 from "../assets/LOGO2.svg";
 import "../styles/App.css";
 import { useNavigate } from "react-router-dom";
-
+import React, { useState, useRef, useEffect } from "react";
 export default function Sidebar({
   chatTitles = [],
   onNewChat,
@@ -38,22 +38,42 @@ export default function Sidebar({
   const [anim, setAnim] = useState("fade-in");
   const timerRef = useRef(null);
   const navigate = useNavigate();
-  const [showSearchModal, setShowSearchModal] = useState(false);
-
+  const [menuOpenForId, setMenuOpenForId] = useState(null);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 360, left: 150 });
   const handleOverlayClick = (e) => {
     if (e.target.classList.contains("sidebar-overlay")) {
       onToggleSidebar();
     }
   };
+  const handleShareChat = async (chatId) => {
 
-  const switchMode = (m) => {
-    if (m === mode) return;
-    setAnim("fade-out");
-    setTimeout(() => {
-      setMode(m);
-      setAnim("fade-in");
-    }, 160);
+    const shareLink = `${window.location.origin}/chat/${chatId}`;
+
+    try {
+      await navigator.clipboard.writeText(shareLink);
+
+      setShowCopyToast(true);
+
+      setTimeout(() => {
+        setShowCopyToast(false);
+      }, 2500);
+
+    } catch (err) {
+      console.error("Copy failed", err);
+    }
+
+    setMenuOpenForId(null);
   };
+  useEffect(() => {
+    const closeMenu = () => setMenuOpenForId(null);
+
+    if (menuOpenForId !== null) {
+      window.addEventListener("click", closeMenu);
+    }
+
+    return () => window.removeEventListener("click", closeMenu);
+  }, [menuOpenForId]);
 
   const handleTouchStart = (chatId) => {
     timerRef.current = setTimeout(() => {
@@ -68,12 +88,14 @@ export default function Sidebar({
   };
 
   const handleChatClick = (chatId) => {
+    setMenuOpenForId(null); // close menu
+
     if (deleteVisibleForId && deleteVisibleForId !== chatId) {
       setDeleteVisibleForId(null);
     }
+
     onSelectChat(chatId);
   };
-
   const filteredChats = chatTitles.filter((chat) =>
     (chat.title || "").toLowerCase().includes((searchTerm || "").toLowerCase())
   );
@@ -82,6 +104,13 @@ export default function Sidebar({
 
   return (
     <>
+
+      {showCopyToast && (
+        <div className="copy-toast">
+          Link copied!
+        </div>
+      )}
+
       {sidebarOpen && (
         <div
           className={`sidebar-overlay ${sidebarOpen ? "open" : "collapsed"}`}
@@ -96,38 +125,38 @@ export default function Sidebar({
         {/* Logo */}
         <div className="logo-wrapper">
 
-  <img
-    src={LOGO2}
-    alt="MindMate Logo"
-    className="logo-i"
-  />
+          <img
+            src={LOGO2}
+            alt="MindMate Logo"
+            className="logo-i"
+          />
 
-  <button
-    className="collapse-btn"
-    onClick={onToggleCollapse}
-  >
-    <svg width="18" height="18" viewBox="0 0 24 24">
-      {collapsed ? (
-        <path
-          d="M9 18l6-6-6-6"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ) : (
-        <path
-          d="M15 18l-6-6 6-6"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-    </svg>
-  </button>
+          <button
+            className="collapse-btn"
+            onClick={onToggleCollapse}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              {collapsed ? (
+                <path
+                  d="M9 18l6-6-6-6"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : (
+                <path
+                  d="M15 18l-6-6 6-6"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+            </svg>
+          </button>
 
-</div>
+        </div>
 
         {/* ---------- MIDDLE SECTION ---------- */}
         <div className={`sidebar-middle ${anim}`}>
@@ -346,31 +375,61 @@ export default function Sidebar({
                 </span>
 
                 <button
-                  className={`delete-btn ${deleteVisibleForId === chat.id ? "visible-mobile" : ""
-                    }`}
+                  className="chat-options-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setChatToDelete(chat.id);
-                    setShowDeleteModal(true);
+                    setMenuOpenForId(menuOpenForId === chat.id ? null : chat.id);
                   }}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    width="18"
-                    height="18"
-                    className="trash-icon"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="19" cy="12" r="2" />
                   </svg>
                 </button>
+                {menuOpenForId === chat.id && (
+                  <div
+                    className="chat-dropdown"
+                    style={{ top: menuPosition.top, left: menuPosition.left }}
+                  >
+                    <button
+                      className="dropdown-item"
+                      onClick={() => handleShareChat(chat.id)}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+                        <line x1="15.4" y1="6.5" x2="8.6" y2="10.5" />
+                      </svg>
+
+                      Share
+                    </button>
+
+
+                    <button
+                      className="dropdown-item delete"
+                      onClick={() => {
+                        setChatToDelete(chat.id);
+                        setShowDeleteModal(true);
+                        setMenuOpenForId(null);
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" /></svg>
+                      Delete
+                    </button>
+                  </div>
+                )}
               </li>
             ))
           )}

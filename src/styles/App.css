@@ -548,7 +548,7 @@ textarea {
 }
 
 .sidebar-container {
-   position: relative;
+  position: relative;
   height: 100%;
   display: flex;
   width: auto;
@@ -570,7 +570,7 @@ textarea {
   height: 100vh;
   box-sizing: border-box;
   transition: width 0.28s ease, padding 0.2s ease;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   /* border + shadow live on the sidebar itself */
@@ -923,14 +923,6 @@ textarea {
 
 
 
-.sidebar .chat-list {
-  list-style: none;
-  /* Remove bullets */
-  padding: 0;
-  /* Remove default padding */
-  margin: 0;
-  /* Remove default margin */
-}
 
 .sidebar .chat-list li {
   cursor: pointer;
@@ -974,14 +966,12 @@ textarea {
   color: #bbb;
 }
 
-/* Custom scrollbar - ChatGPT style for sidebar chat list */
-
 .sidebar .chat-list {
-  max-height: 10 vh;
-  /* adjust as needed */
+  max-height: calc(100vh - 240px);
   overflow-y: auto;
-  padding-right: 8px;
-  /* prevent content behind scrollbar */
+  overflow-x: visible;
+  /* IMPORTANT */
+  position: relative;
 }
 
 /* Webkit browsers (Chrome, Edge, Safari) */
@@ -1010,11 +1000,7 @@ textarea {
   box-shadow: 0 0 8px 2px rgba(100, 100, 255, 0.8);
 }
 
-/* Firefox */
-.sidebar .chat-list {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(244, 244, 246, 0.3) transparent;
-}
+
 
 .sidebar .chat-list:hover {
   scrollbar-color: rgba(234, 234, 241, 0.6) transparent;
@@ -1051,36 +1037,31 @@ textarea {
 }
 
 .chat-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 10px 12px;
   border-radius: 6px;
-  transition: background-color 0.2s;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .chat-list li:hover {
   background-color: transparent;
 }
 
-.chat-list li .chat-title {
-  flex-grow: 1;
+.chat-list li:hover .chat-options-btn {
+  opacity: 1;
+}
+
+.chat-title {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  white-space: normal;
-  /* allow wrapping */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  /* limits text to 2 lines */
-  -webkit-box-orient: vertical;
 }
 
 .chat-list li .delete-btn {
@@ -1303,7 +1284,8 @@ body[data-theme="aurora"] {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow-y: auto;   /* change this */
+  overflow-y: auto;
+  /* change this */
   align-items: center;
 }
 
@@ -1537,6 +1519,7 @@ body[data-theme="aurora"] {
   width: 100%;
   max-width: 700px;
 }
+
 /* Chat mode: fixed at bottom like ChatGPT */
 .floating-input-bar.chat-mode {
   position: fixed;
@@ -3289,32 +3272,163 @@ button {
 
 
 /* collapse button */
-.collapse-btn{
-  position:absolute;
-  right:8px;
-  top:50%;
-  transform:translateY(-50%);
-  background:transparent;
-  border:none;
-  cursor:pointer;
-  opacity:0;
-  transition:opacity .2s ease;
+.collapse-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .2s ease;
   outline: none;
 }
 
 /* show arrow when sidebar expanded */
-.sidebar.expanded .collapse-btn{
-  opacity:1;
+.sidebar.expanded .collapse-btn {
+  opacity: 1;
   outline: none;
 }
 
 /* ChatGPT behavior when collapsed */
-.sidebar.collapsed .logo-wrapper:hover .collapse-btn{
-  opacity:1;
+.sidebar.collapsed .logo-wrapper:hover .collapse-btn {
+  opacity: 1;
   outline: none;
 }
 
-.sidebar.collapsed .logo-wrapper:hover .logo-i{
-  opacity:0.25;
+.sidebar.collapsed .logo-wrapper:hover .logo-i {
+  opacity: 0.25;
   outline: none;
 }
+
+.chat-dropdown{
+  position: fixed;   /* instead of absolute */
+  width:220px;
+
+  background:#2a2a2a;
+  border-radius:14px;
+  padding:6px 0;
+
+  box-shadow:0 12px 40px rgba(0,0,0,.6);
+  z-index:999999;
+
+  animation: dropdownFade .15s ease;
+}
+.dropdown-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px 16px;
+
+  background: none;
+  border: none;
+
+  font-size: 14px;
+  color: #e6e6e6;
+
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.dropdown-item svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #bfbfbf;
+  stroke-width: 1.6;
+}
+
+.dropdown-item:hover {
+  background: #3a3a3a;
+}
+
+.dropdown-item.delete {
+  color: #ff6b6b;
+}
+
+.dropdown-item.delete svg {
+  stroke: #ff6b6b;
+}
+
+.dropdown-divider {
+  height: 1px;
+  margin: 6px 0;
+  background: rgba(255, 255, 255, .08);
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-options-btn {
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.chat-list li:hover .chat-options-btn {
+  opacity: 1;
+}
+
+.chat-options-btn {
+
+  background: transparent;
+
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  border-radius: 6px;
+  transition: all .15s ease;
+}
+
+.chat-options-btn:hover {
+  background: #3a3a3a;
+}
+
+.chat-list li:hover .chat-options-btn {
+  opacity: 1;
+  outline: none;
+}
+
+.copy-toast{
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #16a337;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  z-index: 9999;
+
+  animation: toastSlide 0.25s ease;
+}
+
+@keyframes toastSlide{
+  from{
+    opacity:0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to{
+    opacity:1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
