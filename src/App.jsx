@@ -199,7 +199,11 @@ function App() {
     setShowListeningModal(true);
     setPreviewListening(true);
     resetTranscript();
-    SpeechRecognition.startListening({ continuous: true });
+    SpeechRecognition.startListening({
+      continuous: false,
+      interimResults: false,
+      language: "en-US"
+    });
   };
 
   // When user stops
@@ -249,6 +253,15 @@ function App() {
 
   // Voice recognition hooks
   const { transcript, resetTranscript } = useSpeechRecognition();
+  if (!SpeechRecognition.browserSupportsSpeechRecognition()) {
+  console.log("Speech recognition not supported in this browser");
+  }
+  useEffect(() => {
+  if (!listening && transcript.trim()) {
+    sendMessage(transcript.trim());
+    resetTranscript();
+    }
+  }, [transcript, listening]);
 
   // Function: Speak text with ElevenLabs Rachel voice
   // Wrap the Howl playback with an analyser
@@ -1703,20 +1716,24 @@ useEffect(() => {
                       {/* Your other buttons here */}
 
                       <button
-                        className={`icon-btn mic-btn ${listening ? "active" : ""}`}
-                        onClick={() => {
-                          if (listening) {
-                            SpeechRecognition.stopListening();
-                            setListening(false);
-                          } else {
-                            resetTranscript();
-                            SpeechRecognition.startListening({ continuous: true });
-                            setListening(true);
-                          }
-                        }}
-                        title="Voice Input"
-                        type="button"
-                      >
+                      className={`icon-btn mic-btn ${listening ? "active" : ""}`}
+                      onClick={() => {
+                        if (listening) {
+                          SpeechRecognition.stopListening();
+                          setListening(false);
+                        } else {
+                          resetTranscript();
+                          setListening(true);
+
+                          SpeechRecognition.startListening({
+                          continuous: false,
+                          language: "en-US"
+                        });
+                      }
+                     }}
+                     title="Voice Input"
+                     type="button"
+                     >
                         <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
                           <path
                             d="M12 14a4 4 0 004-4V5a4 4 0 10-8 0v5a4 4 0 004 4zm5-4a5 5 0 01-10 0M19 10v1a7 7 0 01-14 0v-1M12 19v3m-4 0h8"
